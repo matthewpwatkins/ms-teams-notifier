@@ -1,6 +1,6 @@
 {
   "name": "ms-teams-notifier",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Rings you when your MS Teams meeting is about to start",
   "main": "dist/teams-meeting-notifier.user.js",
   "scripts": {
