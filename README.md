@@ -6,7 +6,9 @@ This Tampermonkey/GreaseMonkey script solves that. Instructions:
 
 1. Install Tampermonkey or Greasemonkey in your browser if you haven't already.
 2. Click [here](https://github.com/matthewpwatkins/ms-teams-notifier/releases/latest/download/teams-meeting-notifier.user.js) to install the latest version of the script.
-3. Open MS Teams in your browser (you can put the web client on your desktop or taskbar as an app)
+3. Open [MS Teams _in your browser_](https://teams.microsoft.com/). You can't run Tampermonkey scripts on the desktop application.
+    
+    I recommend adding the MS Teams web app to your dock/taskbar/desktop and configuring it to run in its own window so it looks and acts as if it were the desktop application.
 
 If you have the MS Teams app open, you will now get auto-called 2 minutes before every meeting.
 
