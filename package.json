@@ -1,7 +1,7 @@
 {
   "name": "ms-teams-notifier",
   "version": "0.1.0",
-  "description": "A collection of Tampermonkey extensions with shared utilities.",
+  "description": "Rings you when your MS Teams meeting is about to start",
   "main": "dist/teams-meeting-notifier.user.js",
   "scripts": {
     "build": "webpack && node build-scripts/post-build.js",
@@ -29,6 +29,6 @@
     "extensions",
     "typescript"
   ],
-  "author": "Your Name",
+  "author": "Matthew Watkins",
   "license": "MIT"
 }

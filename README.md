@@ -29,3 +29,7 @@ Accessing the calendar events via API call would be preferable. However, that re
 2. `npm install`
 3. `npm run build`
 4. The `.user.js` script is output to the dist folder.
+
+## Releases
+
+Just push or pull request into master to create a new release.
