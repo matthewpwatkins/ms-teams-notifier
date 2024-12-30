@@ -5,7 +5,7 @@ One of the biggest frustrations with Microsoft Teams is that it doesn't proactiv
 This Tampermonkey/GreaseMonkey script solves that. Instructions:
 
 1. Install Tampermonkey or Greasemonkey in your browser if you haven't already.
-2. Install this script from the Releases tab.
+2. Click [here](https://github.com/matthewpwatkins/ms-teams-notifier/releases/latest/download/teams-meeting-notifier.user.js) to install the latest version of the script.
 3. Open MS Teams in your browser (you can put the web client on your desktop or taskbar as an app)
 
 If you have the MS Teams app open, you will now get auto-called 2 minutes before every meeting.

@@ -7,7 +7,7 @@
 // @match        https://teams.microsoft.com/*
 // @match        https://outlook.office.com/hosted/calendar/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=microsoft.com
-// @downloadURL  https://github.com/fs-eng/fs-tampermonkey-scripts/raw/master/scripts/teams-meeting-notifier.user.js
-// @updateURL    https://github.com/fs-eng/fs-tampermonkey-scripts/raw/master/scripts/teams-meeting-notifier.user.js
+// @downloadURL  https://github.com/matthewpwatkins/ms-teams-notifier/releases/latest/download/teams-meeting-notifier.user.js
+// @updateURL    https://github.com/matthewpwatkins/ms-teams-notifier/releases/latest/download/teams-meeting-notifier.user.js
 // @run-at       document-start
 // ==/UserScript==
