@@ -5,7 +5,7 @@
   "main": "dist/teams-meeting-notifier.user.js",
   "scripts": {
     "build": "webpack && node build-scripts/post-build.js",
-    "test": "jest"
+    "test": "jest --passWithNoTests"
   },
   "dependencies": {
     "howler": "^2.2.3"

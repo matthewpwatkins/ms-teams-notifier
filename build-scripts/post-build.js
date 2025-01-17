@@ -2,7 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const packageJson = require('../package.json');
 
-fs.rmSync(path.resolve(__dirname, '../dist/teams-meeting-notifier.user.js.LICENSE.txt'));
+fs.rmSync(path.resolve(__dirname, '../dist/teams-meeting-notifier.user.js.LICENSE.txt'), {
+  force: true
+});
 
 const outputScriptPath = path.resolve(__dirname, '../dist/teams-meeting-notifier.user.js');
 const bannerPath = path.resolve(__dirname, '../src/banner.js');
