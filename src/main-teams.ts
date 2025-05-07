@@ -24,11 +24,21 @@ const state: PageState = {
   outlookEvents: [],
   events: new Map(),
   ringableEvent: undefined,
-  ringState: RingState.NOT_RINGING
+  ringState: RingState.NOT_RINGING,
+  dismissButton: undefined // Track the dismiss button
 };
 
+function onPageChange(mutations?: MutationRecord[]) {
+  // Ignore mutations caused by our dismiss button
+  if (mutations && mutations.some(mutation => {
+    return Array.from(mutation.addedNodes).some(node => 
+      node instanceof HTMLElement && node.id === 'ms-teams-notifier-dismiss-button') ||
+    Array.from(mutation.removedNodes).some(node => 
+      node instanceof HTMLElement && node.id === 'ms-teams-notifier-dismiss-button');
+  })) {
+    return;
+  }
 
-function onPageChange() {
   state.calendarButton = document.querySelector<HTMLElement>('button[aria-label="Calendar"]') || undefined;
   const isOnCalendar = state.calendarButton?.getAttribute('aria-pressed') === 'true';
 
@@ -58,6 +68,7 @@ function onPageChange() {
     if (state.isOnCalendar && state.ringState === RingState.RINGING) {
       state.ringState = RingState.DISMISSED;
       RING.stop();
+      removeDismissButton();
     }
   }
 
@@ -80,6 +91,43 @@ function firstNavigateToCalendar() {
     state.firstCalendarButtonClicked = true;
     clearInterval(interval);
   }, 100);
+}
+
+function createDismissButton() {
+  if (state.dismissButton) {
+    return; // Button already exists
+  }
+
+  // Find the reference button to place our dismiss button next to
+  const referenceButton = document.querySelector<HTMLElement>('button[data-tid="calendar_header_meet_now_join_with_id_button"]');
+  if (!referenceButton) {
+    return; // Reference button not found
+  }
+
+  // Create our dismiss button with similar styling
+  const dismissButton = document.createElement('button');
+  dismissButton.id = 'ms-teams-notifier-dismiss-button';
+  dismissButton.textContent = 'Dismiss Ring';
+  dismissButton.className = referenceButton.className; // Clone the styles
+  dismissButton.style.marginRight = '8px'; // Add some spacing
+  
+  // Add click handler
+  dismissButton.addEventListener('click', () => {
+    state.ringState = RingState.DISMISSED;
+    RING.stop();
+    removeDismissButton();
+  });
+
+  // Insert before the reference button
+  referenceButton.parentNode?.insertBefore(dismissButton, referenceButton);
+  state.dismissButton = dismissButton;
+}
+
+function removeDismissButton() {
+  if (state.dismissButton && state.dismissButton.parentNode) {
+    state.dismissButton.parentNode.removeChild(state.dismissButton);
+    state.dismissButton = undefined;
+  }
 }
 
 function getCalendarEvents() {
@@ -116,20 +164,24 @@ function ringOnActiveEvent() {
   } else {
     state.ringableEvent = undefined;
     state.ringState = RingState.NOT_RINGING;
+    removeDismissButton(); // Remove dismiss button when no ringable event
   }
 
   if (state.ringState === RingState.RINGING) {
     if (RING.playing()) {
       console.log('Already ringing for event:', ringableEvent);
+      createDismissButton(); // Ensure dismiss button exists
     } else {
       console.log('Ringing for event:', ringableEvent, state.calendarButton);
       if (state.calendarButton) {
         state.calendarButton.click();
       }
       RING.play();
+      createDismissButton(); // Add dismiss button when ringing
     }
   } else if (RING.playing()) {
     RING.stop();
+    removeDismissButton(); // Remove dismiss button when not ringing
   }
 }
 
@@ -158,7 +210,7 @@ function starListeningToOutlookMessages() {
 }
 
 export function runTeamsMain() {
-  new MutationObserver(onPageChange).observe(document.body, { childList: true, subtree: true });
+  new MutationObserver((mutations) => onPageChange(mutations)).observe(document.body, { childList: true, subtree: true });
   onPageChange();
   firstNavigateToCalendar();
   startPeriodicRinger();

@@ -14,4 +14,5 @@ export type PageState = {
   events: Map<string, CalendarEvent>;
   ringableEvent?: CalendarEvent;
   ringState: RingState;
+  dismissButton?: HTMLElement;
 };
