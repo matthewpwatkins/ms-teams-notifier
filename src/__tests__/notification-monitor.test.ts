@@ -18,7 +18,7 @@ jest.mock('howler', () => {
   };
 });
 
-jest.mock('../logger', () => ({
+jest.mock('../common/logger', () => ({
   Logger: {
     debug: jest.fn(),
     error: jest.fn(),

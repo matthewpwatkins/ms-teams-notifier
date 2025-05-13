@@ -1,11 +1,10 @@
 import { MeetingMonitor, UpcomingMeetingListener } from '../util/meeting-monitor';
 import { TeamsApiClient } from '../services/teams-api-client';
 import { CalendarEvent } from '../models/calendar-event';
-import { Constants } from '../common/constants';
 
 // Mock the TeamsApiClient
-jest.mock('../TeamsApiClient');
-jest.mock('../logger', () => ({
+jest.mock('../services/teams-api-client');
+jest.mock('../common/logger', () => ({
   Logger: {
     debug: jest.fn(),
     error: jest.fn(),
