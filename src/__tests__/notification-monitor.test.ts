@@ -1,6 +1,6 @@
-import { NotificationManager } from '../util/NotificationManager';
-import { MeetingMonitor } from '../util/MeetingMonitor';
-import { CalendarEvent } from '../models/CalendarEvent';
+import { NotificationManager } from '../util/notification-manager';
+import { MeetingMonitor } from '../util/meeting-monitor';
+import { CalendarEvent } from '../models/calendar-event';
 import { Constants } from '../common/constants';
 
 // Mock the Howl class

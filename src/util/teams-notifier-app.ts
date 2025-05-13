@@ -1,8 +1,8 @@
 import { Constants } from '../common/constants';
 import { Logger } from '../common/logger';
-import { TeamsApiClient } from '../services/TeamsApiClient';
-import { MeetingMonitor } from './MeetingMonitor';
-import { NotificationManager } from './NotificationManager';
+import { TeamsApiClient } from '../services/teams-api-client';
+import { MeetingMonitor } from './meeting-monitor';
+import { NotificationManager } from './notification-manager';
 
 export class TeamsNotifierApp {
   private apiClient: TeamsApiClient;

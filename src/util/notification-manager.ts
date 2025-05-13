@@ -1,8 +1,8 @@
 import { Howl } from 'howler';
 import { Constants } from '../common/constants';
 import { Logger } from '../common/logger';
-import { CalendarEvent } from '../models/CalendarEvent';
-import { MeetingMonitor, UpcomingMeetingListener } from './MeetingMonitor';
+import { CalendarEvent } from '../models/calendar-event';
+import { MeetingMonitor, UpcomingMeetingListener } from './meeting-monitor';
 
 /**
  * Manages notification UI and sound for upcoming Team meetings

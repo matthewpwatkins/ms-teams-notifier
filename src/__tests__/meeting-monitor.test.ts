@@ -1,6 +1,6 @@
-import { MeetingMonitor, UpcomingMeetingListener } from '../util/MeetingMonitor';
-import { TeamsApiClient } from '../services/TeamsApiClient';
-import { CalendarEvent } from '../models/CalendarEvent';
+import { MeetingMonitor, UpcomingMeetingListener } from '../util/meeting-monitor';
+import { TeamsApiClient } from '../services/teams-api-client';
+import { CalendarEvent } from '../models/calendar-event';
 import { Constants } from '../common/constants';
 
 // Mock the TeamsApiClient
