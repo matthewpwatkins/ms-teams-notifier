@@ -1,37 +1,54 @@
-# Microsoft Teams Notifier
+# MS Teams Notifier
 
-One of the biggest frustrations with Microsoft Teams is that it doesn't proactively call you when a meeting is about to start. If you don't see the little popup from Outlook, you have no idea you're about to miss your meeting.
+A Chrome extension that provides notifications for upcoming MS Teams meetings.
 
-This Tampermonkey/GreaseMonkey script solves that. Instructions:
+## Features
 
-1. Install Tampermonkey or Greasemonkey in your browser if you haven't already.
-2. Click [here](https://github.com/matthewpwatkins/ms-teams-notifier/releases/latest/download/teams-meeting-notifier.user.js) to install the latest version of the script.
-3. Open [MS Teams _in your browser_](https://teams.microsoft.com/). You can't run Tampermonkey scripts on the desktop application.
-    
-    I recommend adding the MS Teams web app to your dock/taskbar/desktop and configuring it to run in its own window so it looks and acts as if it were the desktop application.
+- Automatically checks for upcoming meetings in your MS Teams calendar
+- Plays a ringtone when a meeting is about to start (within 2 minutes)
+- Shows meeting details including subject, time, and organizer
+- Provides a dismiss button to silence the notification
+- Automatically stops notifications when you join the meeting
+- Automatically stops notifications 2 minutes after the meeting has begun
+- Smart detection of meeting joins to silence notifications
+- Ignores all-day events
 
-If you have the MS Teams app open, you will now get auto-called 2 minutes before every meeting.
+## Architecture
 
-## Limitations
+The extension is built with a modular architecture:
 
-This script works by scraping the calendar events directly from the page DOM, which means it can only get the events when you are in the calendar view. So it will pull up the calendar view on app launch. Both the v1 (Teams) as well as v2 (unified Outlook) calendars are supported. And if you navigate away from the calendar page, the app will remember the events for the day. However, if events change while you're away from the calendar view, you will still be ringed for the last known events. My recommendation is to keep the app focused on the calendar view whenever possible.
+- **Models**: Contains data structures for MS Teams calendar events
+- **Core Components**:
+  - `TeamsApiClient`: Handles API calls to MS Teams calendar API
+  - `MeetingMonitor`: Manages state, polls for events, and notifies listeners
+  - `NotificationManager`: Handles UI interactions and ringtone playback using Howler.js
+  - `TeamsNotifierApp`: Main application class that coordinates all components
 
-Accessing the calendar events via API call would be preferable. However, that requires cross-origin requests and capturing auth tokens which I haven't gotten working on this script yet. If you feel like doing the work to get that working, feel free to submit a pull request.
+## Development
 
-## Upcoming features
+### Setup
 
-1. Improvements to event change detection
-2. Navigate automatically to the call join page for Teams meetings
-3. Allow dismissal of call notifications
-4. Vacation mode
+```bash
+# Install dependencies
+npm install
 
-## Developing locally
+# Build the extension
+npm run build
 
-1. Clone the repository
-2. `npm install`
-3. `npm run build`
-4. The `.user.js` script is output to the dist folder.
+# Create a zip file for distribution
+npm run zip
 
-## Releases
+# Run tests
+npm test
+```
 
-Just push or pull request into master to create a new release.
+### Loading the Extension in Chrome
+
+1. Open Chrome and navigate to `chrome://extensions/`
+2. Enable "Developer mode" (toggle in the top right)
+3. Click "Load unpacked" and select the `dist` directory
+4. Navigate to MS Teams in your browser to test the notification system
+
+## License
+
+ISC License

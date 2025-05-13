@@ -1,0 +1,37 @@
+{
+  "name": "MS Teams Notifier",
+  "description": "Rings you when a meeting is about to start",
+  "homepage_url": "https://watkins.dev",
+  "version": "CURRENT-VERSION",
+  "manifest_version": 3,
+  "permissions": [
+    "storage",
+    "cookies"
+  ],
+  "host_permissions": [
+    "https://teams.microsoft.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png",
+    "256": "icons/icon-256.png",
+    "512": "icons/icon-512.png"
+  },
+  "content_scripts": [
+    {
+      "js": [
+        "content.js"
+      ],
+      "matches": [
+        "https://teams.microsoft.com/*"
+      ]
+    }
+  ]
+}
