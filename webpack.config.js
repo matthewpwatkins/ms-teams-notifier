@@ -5,8 +5,10 @@ const packageJson = require('./package.json');
 const childProcess = require('child_process');
 const webpack = require('webpack');
 
+const isDevBuild = process.env.NODE_ENV === 'development';
+
 module.exports = {
-  mode: "production",
+  mode: isDevBuild ? 'development' : 'production',
   entry: {
     content: path.resolve(__dirname, "src", "content.ts"),
     background: path.resolve(__dirname, "src", "background.ts")
@@ -15,6 +17,7 @@ module.exports = {
     path: path.join(__dirname, "dist"),
     filename: "[name].js",
   },
+  devtool: isDevBuild ? 'cheap-module-source-map' : 'source-map',
   resolve: {
     extensions: [".ts", ".js"],
   },
@@ -26,6 +29,20 @@ module.exports = {
         exclude: /node_modules/,
       },
     ],
+  },
+  optimization: {
+    minimize: !isDevBuild,
+    // Preserve function names for easier debugging
+    minimizer: [
+      '...',
+      // Only apply Terser options if not a development build
+      !isDevBuild && new (require('terser-webpack-plugin'))({
+        terserOptions: {
+          keep_fnames: true,
+          mangle: false,
+        },
+      })
+    ].filter(Boolean)
   },
   plugins: [
     new CopyPlugin({

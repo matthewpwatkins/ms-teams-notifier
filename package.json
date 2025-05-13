@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "build": "rm -fr dist/* && webpack --config webpack.config.js",
-    "build:local": "LOG_LEVEL=debug npm run build",
+    "build:local": "NODE_ENV=development LOG_LEVEL=trace npm run build",
     "zip": "npm run build && cd dist && zip -r ms-teams-notifier.zip ./* && mv ms-teams-notifier.zip ../ms-teams-notifier.zip",
     "test": "jest"
   },
