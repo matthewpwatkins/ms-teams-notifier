@@ -1,3 +1,14 @@
+jest.mock('../common/logger', () => ({
+  Logger: {
+    debug: jest.fn(),
+    error: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    setLogLevel: jest.fn(),
+    trace: jest.fn()
+  }
+}));
+
 import { NotificationManager } from '../util/notification-manager';
 import { MeetingMonitor } from '../util/meeting-monitor';
 import { CalendarEvent } from '../models/calendar-event';
@@ -17,16 +28,6 @@ jest.mock('howler', () => {
     })
   };
 });
-
-jest.mock('../common/logger', () => ({
-  Logger: {
-    debug: jest.fn(),
-    error: jest.fn(),
-    info: jest.fn(),
-    warn: jest.fn(),
-    setLogLevel: jest.fn()
-  }
-}));
 
 describe('NotificationManager', () => {
   let notificationManager: NotificationManager;
