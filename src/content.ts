@@ -1,6 +1,6 @@
-import { Logger, parseLogLevel } from './logger';
-import { TeamsApiClient } from './TeamsApiClient';
-import { TeamsNotifierApp } from './TeamsNotifierApp';
+import { Logger, parseLogLevel } from './common/logger';
+import { TeamsApiClient } from './services/TeamsApiClient';
+import { TeamsNotifierApp } from './util/TeamsNotifierApp';
 
 Logger.setLogLevel(parseLogLevel(process.env.LOG_LEVEL)!);
 if (window.location.hostname === 'teams.microsoft.com') {

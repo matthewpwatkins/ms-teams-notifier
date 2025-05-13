@@ -1,5 +1,5 @@
-import { Logger } from './logger';
-import { CalendarEvent } from './models/CalendarEvent';
+import { Logger } from '../common/logger';
+import { CalendarEvent } from '../models/CalendarEvent';
 
 /**
  * Options for fetching calendar events

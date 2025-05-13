@@ -1,7 +1,7 @@
-import { MeetingMonitor, UpcomingMeetingListener } from '../MeetingMonitor';
-import { TeamsApiClient } from '../TeamsApiClient';
+import { MeetingMonitor, UpcomingMeetingListener } from '../util/MeetingMonitor';
+import { TeamsApiClient } from '../services/TeamsApiClient';
 import { CalendarEvent } from '../models/CalendarEvent';
-import { Constants } from '../constants';
+import { Constants } from '../common/constants';
 
 // Mock the TeamsApiClient
 jest.mock('../TeamsApiClient');

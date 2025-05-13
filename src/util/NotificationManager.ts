@@ -1,7 +1,7 @@
 import { Howl } from 'howler';
-import { Constants } from './constants';
-import { Logger } from './logger';
-import { CalendarEvent } from './models/CalendarEvent';
+import { Constants } from '../common/constants';
+import { Logger } from '../common/logger';
+import { CalendarEvent } from '../models/CalendarEvent';
 import { MeetingMonitor, UpcomingMeetingListener } from './MeetingMonitor';
 
 /**

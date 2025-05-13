@@ -1,5 +1,5 @@
-import { Constants } from './constants';
-import { Logger } from './logger';
+import { Constants } from '../common/constants';
+import { Logger } from '../common/logger';
 
 /**
  * Listener for auth token changes

@@ -1,6 +1,6 @@
-import { Constants } from './constants';
-import { Logger } from './logger';
-import { TeamsApiClient } from './TeamsApiClient';
+import { Constants } from '../common/constants';
+import { Logger } from '../common/logger';
+import { TeamsApiClient } from '../services/TeamsApiClient';
 import { MeetingMonitor } from './MeetingMonitor';
 import { NotificationManager } from './NotificationManager';
 

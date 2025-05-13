@@ -1,7 +1,7 @@
-import { NotificationManager } from '../NotificationManager';
-import { MeetingMonitor } from '../MeetingMonitor';
+import { NotificationManager } from '../util/NotificationManager';
+import { MeetingMonitor } from '../util/MeetingMonitor';
 import { CalendarEvent } from '../models/CalendarEvent';
-import { Constants } from '../constants';
+import { Constants } from '../common/constants';
 
 // Mock the Howl class
 jest.mock('howler', () => {

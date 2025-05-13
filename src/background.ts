@@ -1,6 +1,6 @@
-import { Constants } from './constants';
-import { Logger, parseLogLevel } from './logger';
-import { AuthTokenService } from './AuthTokenService';
+import { Constants } from './common/constants';
+import { Logger, parseLogLevel } from './common/logger';
+import { AuthTokenService } from './services/AuthTokenService';
 
 Logger.setLogLevel(parseLogLevel(process.env.LOG_LEVEL)!);
 

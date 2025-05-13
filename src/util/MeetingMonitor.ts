@@ -1,7 +1,7 @@
-import { Constants } from './constants';
-import { Logger } from './logger';
-import { TeamsApiClient } from './TeamsApiClient';
-import { CalendarEvent } from './models/CalendarEvent';
+import { Constants } from '../common/constants';
+import { Logger } from '../common/logger';
+import { TeamsApiClient } from '../services/TeamsApiClient';
+import { CalendarEvent } from '../models/CalendarEvent';
 
 /**
  * Interface for objects that want to listen for upcoming meeting events
