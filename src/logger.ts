@@ -1,9 +1,5 @@
 /**
- * Logger utility for FS Tools with support for different log levels.
- */
-
-/**
- * Log levels for the logger
+ * Logger utility with support for different log levels.
  */
 export enum LogLevel {
   TRACE = 0,

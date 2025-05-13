@@ -3,7 +3,6 @@ import { Logger } from './logger';
 import { TeamsApiClient } from './TeamsApiClient';
 import { MeetingMonitor } from './MeetingMonitor';
 import { NotificationManager } from './NotificationManager';
-import { CalendarEvent } from './models/CalendarEvent';
 
 export class TeamsNotifierApp {
   private apiClient: TeamsApiClient;
