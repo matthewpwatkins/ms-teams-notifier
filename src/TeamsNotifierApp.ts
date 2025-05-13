@@ -28,7 +28,7 @@ export class TeamsNotifierApp {
       if (message.type === Constants.AUTH_TOKEN_UPDATED_MESSAGE_TYPE) {
         this.authToken = message.token;
         this.apiClient.authToken = this.authToken;
-        Logger.debug(`Received auth token: ${this.authToken}`);
+        Logger.trace(`Received auth token: ${this.authToken}`);
         
         // Start monitoring for meetings once we have an auth token
         if (this.authToken) {
@@ -40,7 +40,7 @@ export class TeamsNotifierApp {
     // Handle disconnection
     this.port.onDisconnect.addListener(() => {
       this.port = null;
-      Logger.debug('Disconnected from background script');
+      Logger.warn('Disconnected from background script');
       this.dispose();
     });
   }
@@ -56,7 +56,7 @@ export class TeamsNotifierApp {
   }
   
   public dispose(): void {
-    Logger.debug('Disposing TeamsNotifierApp');
+    Logger.warn('Disposing TeamsNotifierApp');
     // Clean up resources
     if (this.port) {
       this.port.disconnect();

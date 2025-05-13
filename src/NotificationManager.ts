@@ -43,9 +43,6 @@ export class NotificationManager implements UpcomingMeetingListener {
         }
       }
     });
-
-    // Setup mutation observer to detect when user joins the meeting
-    this.setupMeetingJoinObserver();
   }
 
   /**
@@ -206,7 +203,7 @@ export class NotificationManager implements UpcomingMeetingListener {
           if (!document.getElementById(Constants.DISMISS_BUTTON_ID)) {
             retryCount++;
             this.insertDismissButton();
-            Logger.debug(`Retry ${retryCount}/${maxRetries} to insert dismiss button`);
+            Logger.trace(`Retry ${retryCount}/${maxRetries} to insert dismiss button`);
             
             if (!document.getElementById(Constants.DISMISS_BUTTON_ID)) {
               retryInsert();
@@ -214,7 +211,7 @@ export class NotificationManager implements UpcomingMeetingListener {
           }
         }, retryInterval);
       } else {
-        Logger.debug('Failed to insert dismiss button after maximum retries');
+        Logger.warn('Failed to insert dismiss button after maximum retries');
       }
     };
 
@@ -233,9 +230,9 @@ export class NotificationManager implements UpcomingMeetingListener {
     const moreOptionsHeader = document.getElementById(Constants.MORE_OPTIONS_HEADER_ID);
     if (moreOptionsHeader && moreOptionsHeader.parentElement) {
       moreOptionsHeader.parentElement.insertBefore(this.dismissButtonWrapper, moreOptionsHeader);
-      Logger.debug('Dismiss button inserted successfully');
+      Logger.trace('Dismiss button inserted successfully');
     } else {
-      Logger.debug('Could not find more-options-header element to insert dismiss button');
+      Logger.warn('Could not find more-options-header element to insert dismiss button');
     }
   }
 
@@ -277,55 +274,6 @@ export class NotificationManager implements UpcomingMeetingListener {
     }
     
     this.currentEvent = null;
-  }
-
-  /**
-   * Sets up a mutation observer to detect when the user joins a meeting
-   * @private
-   */
-  private setupMeetingJoinObserver(): void {
-    // Observer to detect when the user joins a meeting
-    const observer = new MutationObserver((mutations) => {
-      try {
-        // There are multiple ways to detect if user joined a meeting in Teams
-        // Look for multiple indicators to be more robust
-        const joinIndicators = [
-          document.body && document.querySelectorAll('.calling-div').length > 0,
-          document.body && document.querySelectorAll('[data-tid="calling-header"]').length > 0,
-          document.body && document.querySelectorAll('[data-tid="call-control-bar"]').length > 0,
-          // The URL typically changes to include "calling" when in a call
-          window.location.href.includes('/calling/'),
-        ];
-        
-        // If any indicators are found and we have a ringtone playing
-        if (joinIndicators.some(indicator => indicator) && this.ringtone?.playing()) {
-          Logger.debug('User joined a meeting, stopping notification');
-          this.stopNotification();
-        }
-      } catch (error) {
-        // Handle errors gracefully in the observer
-        Logger.error('Error in mutation observer:', error);
-      }
-    });
-    
-    // Only observe if we have a valid document body
-    if (document.body) {
-      // Start observing the document body for mutations and URL changes
-      observer.observe(document.body, { 
-        childList: true,
-        subtree: true,
-        attributes: true,
-        attributeFilter: ['class', 'data-tid']
-      });
-    }
-    
-    // Also check when URL changes (Teams is a SPA)
-    window.addEventListener('popstate', () => {
-      if (window.location.href.includes('/calling/') && this.ringtone?.playing()) {
-        Logger.debug('URL changed to call, stopping notification');
-        this.stopNotification();
-      }
-    });
   }
 
   /**

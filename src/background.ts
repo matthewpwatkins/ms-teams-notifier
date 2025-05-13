@@ -49,13 +49,13 @@ function setupPort(port: chrome.runtime.Port) {
 }
 
 async function handleGetAuthTokenRequest(port: chrome.runtime.Port) {
-  Logger.debug(`Received request for auth token from tab: ${port.sender?.tab?.id}`);
+  Logger.trace(`Received request for auth token from tab: ${port.sender?.tab?.id}`);
   const token = await authTokenService.getToken();
   sendAuthTokenChangeMessage(port, token);
 }
 
 function sendAuthTokenChangeMessage(port: chrome.runtime.Port, token: string | null) {
-  Logger.debug(`Sending auth token change message to content script for tab: ${port.sender?.tab?.id}`);
+  Logger.trace(`Sending auth token change message to content script for tab: ${port.sender?.tab?.id}`);
   try {
     port.postMessage({
       type: Constants.AUTH_TOKEN_UPDATED_MESSAGE_TYPE,

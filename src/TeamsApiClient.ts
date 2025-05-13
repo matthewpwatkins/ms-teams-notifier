@@ -52,7 +52,10 @@ export class TeamsApiClient {
       'skypeTeamsMeetingUrl',
     ].join(','));
 
-    const response = await fetch(url.toString(), {
+    const urlString = url.toString();
+
+    Logger.trace('Fetching events from URL:', urlString);
+    const response = await fetch(urlString, {
       headers: {
         Authorization: `Bearer ${this.authToken}`
       }
@@ -62,7 +65,10 @@ export class TeamsApiClient {
       throw new Error('Failed to fetch events');
     }
 
-    const responseObject = (await response.json()) as {
+    const responseText = await response.text();
+    Logger.trace('Response text from ' + urlString, responseText);
+
+    const responseObject = JSON.parse(responseText) as {
       value: CalendarEvent[];
     };
 

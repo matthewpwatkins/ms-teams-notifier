@@ -76,7 +76,7 @@ export class AuthTokenService {
     if (authToken !== this.currentAuthToken) {
       this.currentAuthToken = authToken;
       this.changeListeners.forEach(listener => {
-        Logger.debug('Notifying auth token change listener of new token:', authToken);
+        Logger.trace('Notifying auth token change listener of new token:', authToken);
         try {
           listener(authToken);
         } catch (error) {
