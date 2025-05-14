@@ -38,8 +38,8 @@ module.exports = {
       // Only apply Terser options if not a development build
       !isDevBuild && new (require('terser-webpack-plugin'))({
         terserOptions: {
-          keep_fnames: true,
-          mangle: false,
+          keep_fnames: false,
+          mangle: true,
         },
       })
     ].filter(Boolean)
