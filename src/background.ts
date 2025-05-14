@@ -11,6 +11,26 @@ chrome.runtime.onConnect.addListener((port) => {
   setupPort(port);
 });
 
+chrome.runtime.onSuspend.addListener(() => {
+  Logger.debug('Background script is suspending.');
+});
+
+chrome.runtime.onSuspendCanceled.addListener(() => {
+  Logger.debug('Background script suspend canceled.');
+});
+
+chrome.runtime.onInstalled.addListener(() => {
+  Logger.debug('Extension installed or updated.');
+});
+
+chrome.runtime.onRestartRequired.addListener(() => {
+  Logger.debug('Extension restart required.');
+});
+
+chrome.runtime.onUpdateAvailable.addListener(() => {
+  Logger.debug('Extension update available.');
+});
+
 authTokenService.addChangeListener((token) => {
   Object.values(ports).forEach(port => {
     sendAuthTokenChangeMessage(port, token);
@@ -55,7 +75,7 @@ async function handleGetAuthTokenRequest(port: chrome.runtime.Port) {
 }
 
 function sendAuthTokenChangeMessage(port: chrome.runtime.Port, token: string | null) {
-  Logger.trace(`Sending auth token change message to content script for tab: ${port.sender?.tab?.id}`);
+  Logger.trace(`Sending auth token change message to content script for tab: ${port.sender?.tab?.id}`, token);
   try {
     port.postMessage({
       type: Constants.AUTH_TOKEN_UPDATED_MESSAGE_TYPE,
