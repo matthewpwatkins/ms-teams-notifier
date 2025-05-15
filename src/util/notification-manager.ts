@@ -16,6 +16,8 @@ export class NotificationManager implements UpcomingMeetingListener {
   private currentEvent: CalendarEvent | null = null;
   private meetingMonitor: MeetingMonitor | null = null;
   private dismissedEvents: Set<string> = new Set();
+  private hangupButtonExistedOnNotification: boolean = false;
+  private domObserver: MutationObserver | null = null;
 
   /**
    * Creates a new NotificationManager
@@ -75,6 +77,13 @@ export class NotificationManager implements UpcomingMeetingListener {
 
     // Start playing the ringtone
     this.startRingtone();
+
+    // Check if the hangup button already exists when the notification starts
+    this.hangupButtonExistedOnNotification = !!document.getElementById(Constants.HANGUP_BUTTON_ID);
+    Logger.debug(`Hangup button exists at notification start: ${this.hangupButtonExistedOnNotification}`);
+    
+    // Set up DOM observer to detect when hangup button appears
+    this.setupHangupButtonObserver();
 
     // Set a timeout to automatically stop the notification after the event starts
     // plus the notification timeout period
@@ -258,6 +267,13 @@ export class NotificationManager implements UpcomingMeetingListener {
     this.stopRingtone();
     this.removeDismissButton();
     
+    // Disconnect DOM observer
+    if (this.domObserver) {
+      this.domObserver.disconnect();
+      this.domObserver = null;
+      Logger.debug('Disconnected hangup button observer');
+    }
+    
     if (this.notificationTimeout !== null) {
       clearTimeout(this.notificationTimeout);
       this.notificationTimeout = null;
@@ -274,6 +290,42 @@ export class NotificationManager implements UpcomingMeetingListener {
     }
     
     this.currentEvent = null;
+    
+    // Reset hangup button tracking state
+    this.hangupButtonExistedOnNotification = false;
+  }
+
+  /**
+   * Sets up a MutationObserver to detect when the hangup button is added to the page
+   * Used to automatically dismiss the ringing notification when user joins a call
+   * @private
+   */
+  private setupHangupButtonObserver(): void {
+    // Clean up any existing observer first
+    if (this.domObserver) {
+      this.domObserver.disconnect();
+      this.domObserver = null;
+    }
+
+    // Create a new observer to watch for DOM changes
+    this.domObserver = new MutationObserver((mutations) => {
+      // Check if the hangup button has been added to the DOM
+      const hangupButton = document.getElementById(Constants.HANGUP_BUTTON_ID);
+      
+      if (hangupButton && !this.hangupButtonExistedOnNotification) {
+        Logger.debug('Hangup button detected - user joined call while ring was active');
+        // Auto-dismiss the notification
+        this.stopNotification();
+      }
+    });
+
+    // Start observing the document with the configured parameters
+    this.domObserver.observe(document.body, { 
+      childList: true, // Watch for changes in direct children
+      subtree: true,   // Watch the entire subtree
+    });
+    
+    Logger.debug('Set up observer for hangup button');
   }
 
   /**
@@ -281,6 +333,13 @@ export class NotificationManager implements UpcomingMeetingListener {
    */
   public dispose(): void {
     this.stopNotification();
+    
+    // Extra cleanup for DOM observer if still active
+    if (this.domObserver) {
+      this.domObserver.disconnect();
+      this.domObserver = null;
+    }
+    
     if (this.ringtone) {
       this.ringtone.unload();
       this.ringtone = null;
