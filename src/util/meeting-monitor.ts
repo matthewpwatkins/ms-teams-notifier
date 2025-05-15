@@ -58,26 +58,64 @@ export class MeetingMonitor {
 
   /**
    * Starts monitoring for upcoming meetings
-   * Checks immediately and then at regular intervals
+   * Checks immediately and then at 00 and 30 second marks of each minute
    */
   public startMonitoring(): void {
     Logger.debug('Starting meeting monitoring');
-    // Check immediately and then start polling
+    
+    // Check immediately
     this.checkForUpcomingMeetings();
-    this.pollingIntervalId = window.setInterval(
-      () => this.checkForUpcomingMeetings(),
-      Constants.EVENT_POLLING_INTERVAL_MS
-    );
+    
+    // Calculate time to next aligned interval (00 or 30 seconds)
+    const scheduleNextPoll = () => {
+      const now = new Date();
+      const seconds = now.getSeconds();
+      
+      // Calculate seconds until next polling time (at :00 or :30)
+      let timeToNextPoll: number;
+      
+      if (seconds < 30) {
+        // Next poll at :30
+        timeToNextPoll = 30 - seconds;
+      } else {
+        // Next poll at :00 (of the next minute)
+        timeToNextPoll = 60 - seconds;
+      }
+      
+      // Convert to milliseconds
+      let delay = timeToNextPoll * 1000;
+      
+      // If the next poll is less than 10 seconds away, skip to the following one
+      if (delay < 10000) {
+        delay += 30000; // Skip to next 30-second interval
+      }
+      
+      Logger.debug(`Scheduling next meeting check in ${Math.round(delay/1000)} seconds`);
+      
+      // Clear any existing interval
+      if (this.pollingIntervalId !== null) {
+        clearTimeout(this.pollingIntervalId);
+      }
+      
+      // Schedule the next poll
+      this.pollingIntervalId = window.setTimeout(() => {
+        this.checkForUpcomingMeetings();
+        scheduleNextPoll(); // Schedule the next poll after execution
+      }, delay);
+    };
+    
+    // Start the polling cycle
+    scheduleNextPoll();
   }
 
   /**
    * Stops monitoring for upcoming meetings
-   * Clears the polling interval
+   * Clears the polling timeout
    */
   public stopMonitoring(): void {
     Logger.debug('Stopping meeting monitoring');
     if (this.pollingIntervalId !== null) {
-      clearInterval(this.pollingIntervalId);
+      clearTimeout(this.pollingIntervalId);
       this.pollingIntervalId = null;
     }
   }
