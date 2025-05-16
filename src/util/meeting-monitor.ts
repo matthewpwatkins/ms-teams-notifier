@@ -12,7 +12,7 @@ export interface UpcomingMeetingListener {
    * @param event - The upcoming calendar event
    */
   onUpcomingMeeting(event: CalendarEvent): void;
-  
+
   /**
    * Called when no upcoming meetings are detected within the notification threshold
    */
@@ -28,6 +28,7 @@ export class MeetingMonitor {
   private pollingIntervalId: number | null = null;
   private listeners: UpcomingMeetingListener[] = [];
   private activeNotificationEvent: CalendarEvent | null = null;
+  private isActivelyRunning: boolean = false;
 
   /**
    * Creates a new MeetingMonitor
@@ -35,6 +36,10 @@ export class MeetingMonitor {
    */
   constructor(apiClient: TeamsApiClient) {
     this.apiClient = apiClient;
+  }
+
+  get isActive(): boolean {
+    return this.isActivelyRunning;
   }
 
   /**
@@ -61,51 +66,19 @@ export class MeetingMonitor {
    * Checks immediately and then at 00 and 30 second marks of each minute
    */
   public startMonitoring(): void {
+    if (this.isActivelyRunning) {
+      Logger.debug('Meeting monitoring is already active');
+      return;
+    }
+
     Logger.debug('Starting meeting monitoring');
-    
+    this.isActivelyRunning = true;
+
     // Check immediately
     this.checkForUpcomingMeetings();
-    
-    // Calculate time to next aligned interval (00 or 30 seconds)
-    const scheduleNextPoll = () => {
-      const now = new Date();
-      const seconds = now.getSeconds();
-      
-      // Calculate seconds until next polling time (at :00 or :30)
-      let timeToNextPoll: number;
-      
-      if (seconds < 30) {
-        // Next poll at :30
-        timeToNextPoll = 30 - seconds;
-      } else {
-        // Next poll at :00 (of the next minute)
-        timeToNextPoll = 60 - seconds;
-      }
-      
-      // Convert to milliseconds
-      let delay = timeToNextPoll * 1000;
-      
-      // If the next poll is less than 10 seconds away, skip to the following one
-      if (delay < 10000) {
-        delay += 30000; // Skip to next 30-second interval
-      }
-      
-      Logger.debug(`Scheduling next meeting check in ${Math.round(delay/1000)} seconds`);
-      
-      // Clear any existing interval
-      if (this.pollingIntervalId !== null) {
-        clearTimeout(this.pollingIntervalId);
-      }
-      
-      // Schedule the next poll
-      this.pollingIntervalId = window.setTimeout(() => {
-        this.checkForUpcomingMeetings();
-        scheduleNextPoll(); // Schedule the next poll after execution
-      }, delay);
-    };
-    
+
     // Start the polling cycle
-    scheduleNextPoll();
+    this.scheduleNextPoll();
   }
 
   /**
@@ -127,6 +100,53 @@ export class MeetingMonitor {
   public setActiveNotification(event: CalendarEvent | null): void {
     this.activeNotificationEvent = event;
     Logger.debug(`Active notification ${event ? `set to ${event.subject}` : 'cleared'}`);
+  }
+
+  /**
+   * Cleans up resources used by the MeetingMonitor
+   */
+  public dispose(): void {
+    this.stopMonitoring();
+    this.listeners = [];
+  }
+
+  // #region Private helpers
+
+  private scheduleNextPoll(): void {
+    const now = new Date();
+    const seconds = now.getSeconds();
+
+    // Calculate seconds until next polling time (at :00 or :30)
+    let timeToNextPoll: number;
+
+    if (seconds < 30) {
+      // Next poll at :30
+      timeToNextPoll = 30 - seconds;
+    } else {
+      // Next poll at :00 (of the next minute)
+      timeToNextPoll = 60 - seconds;
+    }
+
+    // Convert to milliseconds
+    let delay = timeToNextPoll * 1000;
+
+    // If the next poll is less than 10 seconds away, skip to the following one
+    if (delay < 10000) {
+      delay += 30000; // Skip to next 30-second interval
+    }
+
+    Logger.debug(`Scheduling next meeting check in ${Math.round(delay / 1000)} seconds`);
+
+    // Clear any existing interval
+    if (this.pollingIntervalId !== null) {
+      clearTimeout(this.pollingIntervalId);
+    }
+
+    // Schedule the next poll
+    this.pollingIntervalId = window.setTimeout(() => {
+      this.checkForUpcomingMeetings();
+      this.scheduleNextPoll(); // Schedule the next poll after execution
+    }, delay);
   }
 
   /**
@@ -185,57 +205,51 @@ export class MeetingMonitor {
    */
   private findNextUpcomingEvent(events: CalendarEvent[]): CalendarEvent | null {
     const now = Date.now();
-    
+
     // Filter out irrelevant events:
     // - All-day events (as specified in requirements)
     // - Cancelled events
     // - Events that have already started
     // - Events without online meeting URLs (likely not Teams meetings)
-    const relevantEvents = events.filter(event => 
-      !event.isAllDayEvent && 
-      !event.isCancelled && 
+    const relevantEvents = events.filter(event =>
+      !event.isAllDayEvent &&
+      !event.isCancelled &&
       new Date(event.startTime).getTime() > now
       // TOOD: Maybe make this configurable
       // && event.isOnlineMeeting
       // && event.skypeTeamsMeetingUrl
     );
-    
+
     Logger.debug(`Found ${relevantEvents.length} relevant events after filtering`);
-    
+
     // Find events starting within the notification threshold
     const upcomingEvents = relevantEvents.filter(event => {
       const startTime = new Date(event.startTime).getTime();
       const timeUntilStart = startTime - now;
       const isUpcoming = timeUntilStart <= Constants.EVENT_NOTIFICATION_THRESHOLD_MS;
-      
+
       if (isUpcoming) {
-        Logger.debug(`Event "${event.subject}" starting in ${Math.floor(timeUntilStart/1000)} seconds`);
+        Logger.debug(`Event "${event.subject}" starting in ${Math.floor(timeUntilStart / 1000)} seconds`);
       }
-      
+
       return isUpcoming;
     });
-    
+
     // If we have any events starting soon, return the earliest one
     if (upcomingEvents.length > 0) {
-      upcomingEvents.sort((a, b) => 
+      upcomingEvents.sort((a, b) =>
         new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
       );
-      
+
       const nextEvent = upcomingEvents[0];
       const startTime = new Date(nextEvent.startTime);
       Logger.debug(`Next upcoming event: "${nextEvent.subject}" at ${startTime.toLocaleTimeString()}`);
-      
+
       return nextEvent;
     }
-    
+
     return null;
   }
 
-  /**
-   * Cleans up resources used by the MeetingMonitor
-   */
-  public dispose(): void {
-    this.stopMonitoring();
-    this.listeners = [];
-  }
+  // #endregion
 }

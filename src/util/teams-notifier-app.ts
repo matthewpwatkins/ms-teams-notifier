@@ -16,7 +16,6 @@ export class TeamsNotifierApp {
 
   private authToken: string | null = null;
   private portManager: ChromePortManager;
-  private wasMonitoring: boolean = false;
   
   /**
    * Creates a new TeamsNotifierApp
@@ -65,13 +64,6 @@ export class TeamsNotifierApp {
     // Listen for disconnection events
     this.portManager.on(PortEventType.DISCONNECTED, () => {
       Logger.warn('Disconnected from background script');
-      
-      // If we were monitoring before disconnection, stop temporarily
-      if (this.authToken) {
-        this.wasMonitoring = true;
-        this.meetingMonitor.stopMonitoring();
-        Logger.debug('Temporarily stopped meeting monitoring due to disconnection');
-      }
     });
     
     // Listen for reconnection events
@@ -91,18 +83,21 @@ export class TeamsNotifierApp {
    * @private
    */
   private handleAuthTokenUpdate(message: any): void {
+    Logger.trace(`Received auth token: ${message.token}`);
+
+    if (!message.token) {
+      // Sometimes we get a null token while the original token is still valid
+      // We can ignore this case
+      Logger.warn('Received null auth token, ignoring');
+      return;
+    }
+
     this.authToken = message.token;
     this.apiClient.authToken = this.authToken;
-    Logger.trace(`Received auth token: ${this.authToken}`);
     
     // Start monitoring for meetings once we have an auth token
-    if (this.authToken) {
+    if (this.meetingMonitor.isActive) {
       this.meetingMonitor.startMonitoring();
-      this.wasMonitoring = true;
-    } else if (this.wasMonitoring) {
-      // If we had a token before but now it's null, stop monitoring
-      this.meetingMonitor.stopMonitoring();
-      this.wasMonitoring = false;
     }
   }
   
@@ -152,7 +147,6 @@ export class TeamsNotifierApp {
       this.notificationManager.dispose();
     }
     
-    this.wasMonitoring = false;
     this.authToken = null;
   }
 }

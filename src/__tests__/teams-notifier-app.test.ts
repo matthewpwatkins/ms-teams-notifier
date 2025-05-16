@@ -136,13 +136,18 @@ describe('TeamsNotifierApp', () => {
     expect(portEventHandlers.has(PortEventType.RECONNECTION_FAILED)).toBe(true);
   });
   
-  test('handleAuthTokenUpdate should update token and start monitoring', () => {
+  test('handleAuthTokenUpdate should update token and start monitoring when isActive', () => {
     // Arrange
     const mockMessage = { 
       type: Constants.AUTH_TOKEN_UPDATED_MESSAGE_TYPE,
       token: 'new-token',
       timestamp: Date.now()
     };
+    
+    // Setup isActive to be true
+    Object.defineProperty(mockMeetingMonitor, 'isActive', {
+      get: jest.fn().mockReturnValue(true)
+    });
     
     // Act - call the handler directly
     const handler = messageHandlers.get(Constants.AUTH_TOKEN_UPDATED_MESSAGE_TYPE);
@@ -156,13 +161,40 @@ describe('TeamsNotifierApp', () => {
     expect(mockApiClient.authToken).toBe('new-token');
     expect(mockMeetingMonitor.startMonitoring).toHaveBeenCalled();
     expect(app['authToken']).toBe('new-token');
-    expect(app['wasMonitoring']).toBe(true);
   });
   
-  test('handleAuthTokenUpdate should stop monitoring when token becomes null', () => {
+  test('handleAuthTokenUpdate should not start monitoring when not active', () => {
+    // Arrange
+    const mockMessage = { 
+      type: Constants.AUTH_TOKEN_UPDATED_MESSAGE_TYPE,
+      token: 'new-token',
+      timestamp: Date.now()
+    };
+    
+    // Setup isActive to be false
+    Object.defineProperty(mockMeetingMonitor, 'isActive', {
+      get: jest.fn().mockReturnValue(false)
+    });
+    
+    // Act - call the handler directly
+    const handler = messageHandlers.get(Constants.AUTH_TOKEN_UPDATED_MESSAGE_TYPE);
+    if (handler) {
+      handler(mockMessage);
+    } else {
+      fail('Expected handler to be defined');
+    }
+    
+    // Assert
+    expect(mockApiClient.authToken).toBe('new-token');
+    expect(mockMeetingMonitor.startMonitoring).not.toHaveBeenCalled();
+    expect(app['authToken']).toBe('new-token');
+  });
+  
+  test('handleAuthTokenUpdate should ignore null tokens', () => {
     // Arrange - first set a token
-    app['authToken'] = 'existing-token';
-    app['wasMonitoring'] = true;
+    const originalToken = 'existing-token';
+    app['authToken'] = originalToken;
+    mockApiClient.authToken = originalToken;
     
     const mockMessage = {
       type: Constants.AUTH_TOKEN_UPDATED_MESSAGE_TYPE,
@@ -179,9 +211,8 @@ describe('TeamsNotifierApp', () => {
     }
     
     // Assert
-    expect(mockApiClient.authToken).toBeNull();
-    expect(mockMeetingMonitor.stopMonitoring).toHaveBeenCalled();
-    expect(app['wasMonitoring']).toBe(false);
+    expect(app['authToken']).toBe(originalToken);
+    expect(mockApiClient.authToken).toBe(originalToken);
   });
   
   test('connected handler should request auth token', () => {
@@ -199,10 +230,7 @@ describe('TeamsNotifierApp', () => {
     });
   });
   
-  test('disconnected handler should stop monitoring if token exists', () => {
-    // Arrange
-    app['authToken'] = 'some-token';
-    
+  test('disconnected handler should log a warning', () => {
     // Act
     const handler = portEventHandlers.get(PortEventType.DISCONNECTED);
     if (handler) {
@@ -211,9 +239,7 @@ describe('TeamsNotifierApp', () => {
       fail('Expected handler to be defined');
     }
     
-    // Assert
-    expect(mockMeetingMonitor.stopMonitoring).toHaveBeenCalled();
-    expect(app['wasMonitoring']).toBe(true);
+    // Just verify it runs without error, we're not stopping monitoring anymore
   });
   
   test('reconnecting handler should log the reconnect attempt', () => {
@@ -274,7 +300,6 @@ describe('TeamsNotifierApp', () => {
     expect(mockPortManager.dispose).toHaveBeenCalled();
     expect(mockMeetingMonitor.dispose).toHaveBeenCalled();
     expect(mockNotificationManager.dispose).toHaveBeenCalled();
-    expect(app['wasMonitoring']).toBe(false);
     expect(app['authToken']).toBeNull();
   });
 });
