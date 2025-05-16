@@ -10,13 +10,14 @@ import { MeetingMonitor, UpcomingMeetingListener } from './meeting-monitor';
  */
 export class NotificationManager implements UpcomingMeetingListener {
   private ringtone: Howl | null = null;
+  private isRinging: boolean = false;
   private dismissButton: HTMLButtonElement | null = null;
   private dismissButtonWrapper: HTMLDivElement | null = null;
   private notificationTimeout: number | null = null;
   private currentEvent: CalendarEvent | null = null;
   private meetingMonitor: MeetingMonitor | null = null;
   private dismissedEvents: Set<string> = new Set();
-  private hangupButtonExistedOnNotification: boolean = false;
+  private userIsJoiningOrInCall: boolean = false;
   private domObserver: MutationObserver | null = null;
 
   /**
@@ -59,7 +60,7 @@ export class NotificationManager implements UpcomingMeetingListener {
     }
 
     // If we're already notifying for an event, don't start another notification
-    if (this.ringtone?.playing()) {
+    if (this.isRinging) {
       Logger.debug('Already notifying for an event, ignoring new event notification');
       return;
     }
@@ -79,11 +80,11 @@ export class NotificationManager implements UpcomingMeetingListener {
     this.startRingtone();
 
     // Check if the hangup button already exists when the notification starts
-    this.hangupButtonExistedOnNotification = !!document.getElementById(Constants.HANGUP_BUTTON_ID);
-    Logger.debug(`Hangup button exists at notification start: ${this.hangupButtonExistedOnNotification}`);
+    this.userIsJoiningOrInCall = !!document.getElementById(Constants.HANGUP_BUTTON_ID);
+    Logger.debug(`Hangup button exists at notification start: ${this.userIsJoiningOrInCall}`);
     
     // Set up DOM observer to detect when hangup button appears
-    this.setupHangupButtonObserver();
+    this.setupDomObserver();
 
     // Set a timeout to automatically stop the notification after the event starts
     // plus the notification timeout period
@@ -115,6 +116,7 @@ export class NotificationManager implements UpcomingMeetingListener {
   private startRingtone(): void {
     Logger.debug('Starting ringtone playback');
     if (this.ringtone && !this.ringtone.playing()) {
+      this.isRinging = true;
       this.ringtone.play();
     }
   }
@@ -126,6 +128,7 @@ export class NotificationManager implements UpcomingMeetingListener {
   private stopRingtone(): void {
     Logger.debug('Stopping ringtone playback');
     if (this.ringtone && this.ringtone.playing()) {
+      this.isRinging = false;
       this.ringtone.stop();
     }
   }
@@ -292,7 +295,7 @@ export class NotificationManager implements UpcomingMeetingListener {
     this.currentEvent = null;
     
     // Reset hangup button tracking state
-    this.hangupButtonExistedOnNotification = false;
+    this.userIsJoiningOrInCall = false;
   }
 
   /**
@@ -300,7 +303,7 @@ export class NotificationManager implements UpcomingMeetingListener {
    * Used to automatically dismiss the ringing notification when user joins a call
    * @private
    */
-  private setupHangupButtonObserver(): void {
+  private setupDomObserver(): void {
     // Clean up any existing observer first
     if (this.domObserver) {
       this.domObserver.disconnect();
@@ -309,14 +312,17 @@ export class NotificationManager implements UpcomingMeetingListener {
 
     // Create a new observer to watch for DOM changes
     this.domObserver = new MutationObserver((mutations) => {
-      // Check if the hangup button has been added to the DOM
-      const hangupButton = document.getElementById(Constants.HANGUP_BUTTON_ID);
-      
-      if (hangupButton && !this.hangupButtonExistedOnNotification) {
-        Logger.debug('Hangup button detected - user joined call while ring was active');
-        // Auto-dismiss the notification
+      const userIsNowJoiningOrInCall = !!(document.getElementById(Constants.PREJOIN_BUTTON)
+        || document.getElementById(Constants.HANGUP_BUTTON_ID));
+
+      // Stop ringing if the user is newly in a call
+      if (this.isRinging && !this.userIsJoiningOrInCall && userIsNowJoiningOrInCall) {
+
+        Logger.debug('User is now joining or in a call - stopping any ringing notification');
         this.stopNotification();
       }
+
+      this.userIsJoiningOrInCall = userIsNowJoiningOrInCall;
     });
 
     // Start observing the document with the configured parameters
