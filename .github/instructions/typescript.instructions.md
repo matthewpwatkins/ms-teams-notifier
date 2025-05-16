@@ -14,6 +14,7 @@ applyTo: '**/*.ts'
 - Use private helper methods to reduce duplication
 - If a private method does not rely on any instance variables, make it `static`
 - Use file names that match the class name, but lowercased with hyphens between words (e.g. `my-class.ts` for `MyClass`)
+- Fields should be private and readonly by default, and only made public or mutable when necessary
 
 ### Non-test code
 
