@@ -10,9 +10,10 @@ import { NotificationManager } from './notification-manager';
  * Connects to the background script and manages monitoring of Teams meetings
  */
 export class TeamsNotifierApp {
-  private apiClient: TeamsApiClient;
-  private meetingMonitor: MeetingMonitor;
-  private notificationManager: NotificationManager;
+  private readonly apiClient: TeamsApiClient;
+  private readonly meetingMonitor: MeetingMonitor;
+  private readonly notificationManager: NotificationManager;
+
   private authToken: string | null = null;
   private portManager: ChromePortManager;
   private wasMonitoring: boolean = false;
@@ -21,10 +22,10 @@ export class TeamsNotifierApp {
    * Creates a new TeamsNotifierApp
    * @param apiClient - The Teams API client to use
    */
-  constructor(apiClient: TeamsApiClient) {
+  constructor(apiClient: TeamsApiClient, meetingMonitor: MeetingMonitor, notificationManager: NotificationManager) {
     this.apiClient = apiClient;
-    this.meetingMonitor = new MeetingMonitor(apiClient);
-    this.notificationManager = new NotificationManager(this.meetingMonitor);
+    this.meetingMonitor = meetingMonitor;
+    this.notificationManager = notificationManager;
     
     // Connect the notification manager to the meeting monitor
     this.meetingMonitor.addListener(this.notificationManager);

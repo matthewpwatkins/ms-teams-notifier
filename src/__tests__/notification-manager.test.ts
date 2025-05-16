@@ -13,6 +13,7 @@ import { NotificationManager } from '../util/notification-manager';
 import { MeetingMonitor } from '../util/meeting-monitor';
 import { CalendarEvent } from '../models/calendar-event';
 import { Constants } from '../common/constants';
+import { DomWatcher } from '../util/dom-watcher';
 
 // Mock the Howl class
 jest.mock('howler', () => {
@@ -32,6 +33,8 @@ jest.mock('howler', () => {
 describe('NotificationManager', () => {
   let notificationManager: NotificationManager;
   let mockMeetingMonitor: jest.MockedObject<MeetingMonitor>;
+  let mockDomWatcher: jest.MockedObject<DomWatcher>;
+  let mockHowlFactory: jest.Mock;
   let mockEvent: CalendarEvent;
   
   beforeEach(() => {
@@ -52,6 +55,21 @@ describe('NotificationManager', () => {
       dispose: jest.fn()
     } as unknown as jest.MockedObject<MeetingMonitor>;
     
+    mockDomWatcher = {
+      subscribe: jest.fn(),
+      unsubscribe: jest.fn()
+    } as unknown as jest.MockedObject<DomWatcher>;
+    
+    mockHowlFactory = jest.fn().mockImplementation((options) => {
+      return {
+        play: jest.fn(),
+        stop: jest.fn(),
+        playing: jest.fn().mockReturnValue(false),
+        unload: jest.fn(),
+        once: jest.fn()
+      };
+    });
+    
     mockEvent = {
       startTime: new Date(Date.now() + 60 * 1000), // 1 minute from now
       endTime: new Date(Date.now() + 60 * 60 * 1000),
@@ -63,7 +81,7 @@ describe('NotificationManager', () => {
       objectId: 'test-object-id-1'
     };
     
-    notificationManager = new NotificationManager(mockMeetingMonitor);
+    notificationManager = new NotificationManager(window, document, mockDomWatcher, mockMeetingMonitor, mockHowlFactory);
   });
   
   afterEach(() => {
@@ -86,11 +104,27 @@ describe('NotificationManager', () => {
 
   test('should not create new notification if ringtone is already playing', () => {
     // Arrange
-    const ringtone = (notificationManager as any).ringtone;
-    ringtone.playing.mockReturnValue(true);
+    // First trigger a notification to set the isRinging flag
+    notificationManager.onUpcomingMeeting(mockEvent);
+    
+    // Clear the mocks to verify no more calls in the next test
+    mockMeetingMonitor.setActiveNotification.mockClear();
+    
+    // Mock the ringtone to say it's playing
+    const mockRingtone = mockHowlFactory.mock.results[0].value;
+    mockRingtone.playing.mockReturnValue(true);
+    
+    // Reset the document body to remove existing buttons
+    document.body.innerHTML = `
+      <div>
+        <div id="more-options-header"></div>
+      </div>
+    `;
     
     // Act
-    notificationManager.onUpcomingMeeting(mockEvent);
+    // Try to notify for a different event
+    const anotherEvent = { ...mockEvent, objectId: 'test-object-id-2' };
+    notificationManager.onUpcomingMeeting(anotherEvent);
     
     // Assert
     expect(mockMeetingMonitor.setActiveNotification).not.toHaveBeenCalled();
@@ -103,14 +137,14 @@ describe('NotificationManager', () => {
     notificationManager.onUpcomingMeeting(mockEvent);
     
     // Get reference to the mocked ringtone
-    const ringtone = (notificationManager as any).ringtone;
-    ringtone.playing.mockReturnValue(true);
+    const mockRingtone = mockHowlFactory.mock.results[0].value;
+    mockRingtone.playing.mockReturnValue(true);
     
     // Act
     notificationManager.onNoUpcomingMeetings();
     
     // Assert
-    expect(ringtone.stop).toHaveBeenCalled();
+    expect(mockRingtone.stop).toHaveBeenCalled();
     expect(document.getElementById(Constants.DISMISS_BUTTON_ID)).toBeNull();
     expect(mockMeetingMonitor.setActiveNotification).toHaveBeenCalledWith(null);
   });
@@ -119,17 +153,18 @@ describe('NotificationManager', () => {
     // Arrange
     // First create a button and start ringtone
     notificationManager.onUpcomingMeeting(mockEvent);
-    const ringtone = (notificationManager as any).ringtone;
+    const mockRingtone = mockHowlFactory.mock.results[0].value;
     
     // Mock ringtone as playing
-    ringtone.playing.mockReturnValue(true);
+    mockRingtone.playing.mockReturnValue(true);
     
     // Act
     notificationManager.dispose();
     
     // Assert
-    expect(ringtone.stop).toHaveBeenCalled();
-    expect(ringtone.unload).toHaveBeenCalled();
+    expect(mockRingtone.stop).toHaveBeenCalled();
+    expect(mockRingtone.unload).toHaveBeenCalled();
     expect(document.getElementById(Constants.DISMISS_BUTTON_ID)).toBeNull();
+    expect(mockDomWatcher.unsubscribe).toHaveBeenCalled();
   });
 });

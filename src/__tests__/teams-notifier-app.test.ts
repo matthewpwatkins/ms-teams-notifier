@@ -49,7 +49,26 @@ describe('TeamsNotifierApp', () => {
     messageHandlers.clear();
     
     // Setup TeamsApiClient mock
-    mockApiClient = new TeamsApiClient() as jest.Mocked<TeamsApiClient>;
+    mockApiClient = {
+      authToken: null
+    } as jest.Mocked<TeamsApiClient>;
+    
+    // Setup MeetingMonitor mock
+    mockMeetingMonitor = {
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      startMonitoring: jest.fn(),
+      stopMonitoring: jest.fn(),
+      setActiveNotification: jest.fn(),
+      dispose: jest.fn()
+    } as unknown as jest.Mocked<MeetingMonitor>;
+    
+    // Setup NotificationManager mock
+    mockNotificationManager = {
+      onUpcomingMeeting: jest.fn(),
+      onNoUpcomingMeetings: jest.fn(),
+      dispose: jest.fn()
+    } as unknown as jest.Mocked<NotificationManager>;
     
     // Setup ChromePortManager mock implementation
     (ChromePortManager as jest.Mock).mockImplementation(options => {
@@ -76,39 +95,12 @@ describe('TeamsNotifierApp', () => {
       return mockPortManager;
     });
     
-    // Setup MeetingMonitor mock implementation
-    (MeetingMonitor as jest.Mock).mockImplementation(() => {
-      mockMeetingMonitor = {
-        addListener: jest.fn(),
-        removeListener: jest.fn(),
-        startMonitoring: jest.fn(),
-        stopMonitoring: jest.fn(),
-        setActiveNotification: jest.fn(),
-        dispose: jest.fn()
-      } as unknown as jest.Mocked<MeetingMonitor>;
-      
-      return mockMeetingMonitor;
-    });
-    
-    // Setup NotificationManager mock implementation
-    (NotificationManager as jest.Mock).mockImplementation(() => {
-      mockNotificationManager = {
-        onUpcomingMeeting: jest.fn(),
-        onNoUpcomingMeetings: jest.fn(),
-        dispose: jest.fn()
-      } as unknown as jest.Mocked<NotificationManager>;
-      
-      return mockNotificationManager;
-    });
-    
-    // Create the app
-    app = new TeamsNotifierApp(mockApiClient);
+    // Create the app with injected dependencies
+    app = new TeamsNotifierApp(mockApiClient, mockMeetingMonitor, mockNotificationManager);
   });
   
   test('constructor should initialize components and connect to port', () => {
-    // Assert components are created with correct parameters
-    expect(MeetingMonitor).toHaveBeenCalledWith(mockApiClient);
-    expect(NotificationManager).toHaveBeenCalledWith(mockMeetingMonitor);
+    // Assert the notification manager is connected to the meeting monitor
     expect(mockMeetingMonitor.addListener).toHaveBeenCalledWith(mockNotificationManager);
     
     // Assert ChromePortManager is created with correct options

@@ -1,42 +1,57 @@
-import { Howl } from 'howler';
+import { Howl, HowlOptions } from 'howler';
 import { Constants } from '../common/constants';
 import { Logger } from '../common/logger';
 import { CalendarEvent } from '../models/calendar-event';
 import { MeetingMonitor, UpcomingMeetingListener } from './meeting-monitor';
+import { DomWatcher } from './dom-watcher';
 
 /**
  * Manages notification UI and sound for upcoming Team meetings
  * Implements the UpcomingMeetingListener interface to receive meeting notifications
  */
 export class NotificationManager implements UpcomingMeetingListener {
+  private readonly meetingMonitor: MeetingMonitor;
+  private readonly document: Document;
+  private readonly window: Window;
+  private readonly domWatcher: DomWatcher;
+  
   private ringtone: Howl | null = null;
   private isRinging: boolean = false;
   private dismissButton: HTMLButtonElement | null = null;
   private dismissButtonWrapper: HTMLDivElement | null = null;
   private notificationTimeout: number | null = null;
   private currentEvent: CalendarEvent | null = null;
-  private meetingMonitor: MeetingMonitor | null = null;
   private dismissedEvents: Set<string> = new Set();
   private userIsJoiningOrInCall: boolean = false;
-  private domObserver: MutationObserver | null = null;
 
   /**
    * Creates a new NotificationManager
-   * @param meetingMonitor - Optional MeetingMonitor instance to communicate with
+   * @param window - The DOM window object to use for DOM manipulation
+   * @param document - The DOM document object to use for DOM manipulation
+   * @param meetingMonitor - MeetingMonitor instance to communicate with
+   * @param howlFactory - factory function to create Howl instances
    */
-  constructor(meetingMonitor?: MeetingMonitor) {
-    this.meetingMonitor = meetingMonitor || null;
-    
-    // Pre-load the ringtone with error handling
-    this.ringtone = new Howl({
+  constructor(
+    window: Window,
+    document: Document,
+    domWatcher: DomWatcher,
+    meetingMonitor: MeetingMonitor,
+    howlFactory: (options: HowlOptions) => Howl
+  ) {
+    this.window = window;
+    this.document = document;    
+    this.domWatcher = domWatcher;
+    this.meetingMonitor = meetingMonitor;
+
+    this.ringtone = howlFactory({
       src: [Constants.RINGTONE_URL],
       loop: true,
       preload: true,
       volume: 0.7,
-      onloaderror: (soundId, error) => {
+      onloaderror: (soundId: number, error: any) => {
         Logger.error('Error loading ringtone:', error);
       },
-      onplayerror: (soundId, error) => {
+      onplayerror: (soundId: number, error: any) => {
         Logger.error('Error playing ringtone:', error);
         // Try to recover by reloading the sound
         if (this.ringtone) {
@@ -46,6 +61,8 @@ export class NotificationManager implements UpcomingMeetingListener {
         }
       }
     });
+
+    this.domWatcher.subscribe(this.onDomChange.bind(this));
   }
 
   /**
@@ -80,11 +97,8 @@ export class NotificationManager implements UpcomingMeetingListener {
     this.startRingtone();
 
     // Check if the hangup button already exists when the notification starts
-    this.userIsJoiningOrInCall = !!document.getElementById(Constants.HANGUP_BUTTON_ID);
+    this.userIsJoiningOrInCall = !!this.document.getElementById(Constants.HANGUP_BUTTON_ID);
     Logger.debug(`Hangup button exists at notification start: ${this.userIsJoiningOrInCall}`);
-    
-    // Set up DOM observer to detect when hangup button appears
-    this.setupDomObserver();
 
     // Set a timeout to automatically stop the notification after the event starts
     // plus the notification timeout period
@@ -95,7 +109,7 @@ export class NotificationManager implements UpcomingMeetingListener {
     // Calculate when to stop the notification
     const notificationDuration = timeUntilEventStarts + Constants.NOTIFICATION_TIMEOUT_MS;
     
-    this.notificationTimeout = window.setTimeout(() => {
+    this.notificationTimeout = this.window.setTimeout(() => {
       this.stopNotification();
     }, notificationDuration);
   }
@@ -107,6 +121,36 @@ export class NotificationManager implements UpcomingMeetingListener {
   public onNoUpcomingMeetings(): void {
     this.dismissedEvents.clear();
     this.stopNotification();
+  }
+
+  /**
+   * Cleans up resources used by the NotificationManager
+   */
+  public dispose(): void {
+    this.stopNotification();
+    
+    if (this.ringtone) {
+      this.ringtone.unload();
+      this.ringtone = null;
+    }
+
+    this.domWatcher.unsubscribe(this.onDomChange.bind(this));
+  }
+
+  // #region Private helpers
+
+  private onDomChange(): void {
+    const userIsNowJoiningOrInCall = !!(this.document.getElementById(Constants.PREJOIN_BUTTON)
+      || this.document.getElementById(Constants.HANGUP_BUTTON_ID));
+
+    // Stop ringing if the user is newly in a call
+    if (this.isRinging && !this.userIsJoiningOrInCall && userIsNowJoiningOrInCall) {
+
+      Logger.debug('User is now joining or in a call - stopping any ringing notification');
+      this.stopNotification();
+    }
+
+    this.userIsJoiningOrInCall = userIsNowJoiningOrInCall;
   }
 
   /**
@@ -145,14 +189,14 @@ export class NotificationManager implements UpcomingMeetingListener {
     }
 
     // Button wrapper
-    this.dismissButtonWrapper = document.createElement('div');
+    this.dismissButtonWrapper = this.document.createElement('div');
     this.dismissButtonWrapper.className = 'fui-Primitive';
     this.dismissButtonWrapper.style.marginRight = '8px';
     this.dismissButtonWrapper.style.display = 'inline-flex';
     this.dismissButtonWrapper.style.alignItems = 'center';
 
     // Button
-    this.dismissButton = document.createElement('button');
+    this.dismissButton = this.document.createElement('button');
     this.dismissButton.id = Constants.DISMISS_BUTTON_ID;
     this.dismissButton.style.padding = '4px 8px';
     this.dismissButton.style.cursor = 'pointer';
@@ -169,7 +213,7 @@ export class NotificationManager implements UpcomingMeetingListener {
     this.dismissButton.onclick = () => this.stopNotification();
 
     // Icon div
-    const iconDiv = document.createElement('div');
+    const iconDiv = this.document.createElement('div');
     iconDiv.classList.add('ui-box');
     iconDiv.style.width = '2rem';
     iconDiv.style.display = 'flex';
@@ -181,7 +225,7 @@ export class NotificationManager implements UpcomingMeetingListener {
     </svg>`;
 
     // Dismiss text
-    const dismissSpan = document.createElement('span');
+    const dismissSpan = this.document.createElement('span');
     dismissSpan.style.display = 'inline';
     dismissSpan.style.marginLeft = '0.25rem';
     dismissSpan.textContent = 'Dismiss';
@@ -211,13 +255,13 @@ export class NotificationManager implements UpcomingMeetingListener {
 
     const retryInsert = () => {
       if (retryCount < maxRetries) {
-        window.setTimeout(() => {
-          if (!document.getElementById(Constants.DISMISS_BUTTON_ID)) {
+        this.window.setTimeout(() => {
+          if (!this.document.getElementById(Constants.DISMISS_BUTTON_ID)) {
             retryCount++;
             this.insertDismissButton();
             Logger.trace(`Retry ${retryCount}/${maxRetries} to insert dismiss button`);
             
-            if (!document.getElementById(Constants.DISMISS_BUTTON_ID)) {
+            if (!this.document.getElementById(Constants.DISMISS_BUTTON_ID)) {
               retryInsert();
             }
           }
@@ -227,7 +271,7 @@ export class NotificationManager implements UpcomingMeetingListener {
       }
     };
 
-    if (!document.getElementById(Constants.DISMISS_BUTTON_ID)) {
+    if (!this.document.getElementById(Constants.DISMISS_BUTTON_ID)) {
       retryInsert();
     }
   }
@@ -239,7 +283,7 @@ export class NotificationManager implements UpcomingMeetingListener {
   private insertDismissButton(): void {
     if (!this.dismissButtonWrapper) return;
 
-    const moreOptionsHeader = document.getElementById(Constants.MORE_OPTIONS_HEADER_ID);
+    const moreOptionsHeader = this.document.getElementById(Constants.MORE_OPTIONS_HEADER_ID);
     if (moreOptionsHeader && moreOptionsHeader.parentElement) {
       moreOptionsHeader.parentElement.insertBefore(this.dismissButtonWrapper, moreOptionsHeader);
       Logger.trace('Dismiss button inserted successfully');
@@ -270,15 +314,8 @@ export class NotificationManager implements UpcomingMeetingListener {
     this.stopRingtone();
     this.removeDismissButton();
     
-    // Disconnect DOM observer
-    if (this.domObserver) {
-      this.domObserver.disconnect();
-      this.domObserver = null;
-      Logger.debug('Disconnected hangup button observer');
-    }
-    
     if (this.notificationTimeout !== null) {
-      clearTimeout(this.notificationTimeout);
+      this.window.clearTimeout(this.notificationTimeout);
       this.notificationTimeout = null;
     }
     
@@ -293,62 +330,7 @@ export class NotificationManager implements UpcomingMeetingListener {
     }
     
     this.currentEvent = null;
-    
-    // Reset hangup button tracking state
-    this.userIsJoiningOrInCall = false;
   }
 
-  /**
-   * Sets up a MutationObserver to detect when the hangup button is added to the page
-   * Used to automatically dismiss the ringing notification when user joins a call
-   * @private
-   */
-  private setupDomObserver(): void {
-    // Clean up any existing observer first
-    if (this.domObserver) {
-      this.domObserver.disconnect();
-      this.domObserver = null;
-    }
-
-    // Create a new observer to watch for DOM changes
-    this.domObserver = new MutationObserver((mutations) => {
-      const userIsNowJoiningOrInCall = !!(document.getElementById(Constants.PREJOIN_BUTTON)
-        || document.getElementById(Constants.HANGUP_BUTTON_ID));
-
-      // Stop ringing if the user is newly in a call
-      if (this.isRinging && !this.userIsJoiningOrInCall && userIsNowJoiningOrInCall) {
-
-        Logger.debug('User is now joining or in a call - stopping any ringing notification');
-        this.stopNotification();
-      }
-
-      this.userIsJoiningOrInCall = userIsNowJoiningOrInCall;
-    });
-
-    // Start observing the document with the configured parameters
-    this.domObserver.observe(document.body, { 
-      childList: true, // Watch for changes in direct children
-      subtree: true,   // Watch the entire subtree
-    });
-    
-    Logger.debug('Set up observer for hangup button');
-  }
-
-  /**
-   * Cleans up resources used by the NotificationManager
-   */
-  public dispose(): void {
-    this.stopNotification();
-    
-    // Extra cleanup for DOM observer if still active
-    if (this.domObserver) {
-      this.domObserver.disconnect();
-      this.domObserver = null;
-    }
-    
-    if (this.ringtone) {
-      this.ringtone.unload();
-      this.ringtone = null;
-    }
-  }
+  // #endregion
 }
