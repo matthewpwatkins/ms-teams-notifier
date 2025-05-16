@@ -96,7 +96,7 @@ export class TeamsNotifierApp {
     this.apiClient.authToken = this.authToken;
     
     // Start monitoring for meetings once we have an auth token
-    if (this.meetingMonitor.isActive) {
+    if (!this.meetingMonitor.isActive) {
       this.meetingMonitor.startMonitoring();
     }
   }

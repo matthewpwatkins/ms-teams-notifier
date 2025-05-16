@@ -136,7 +136,7 @@ describe('TeamsNotifierApp', () => {
     expect(portEventHandlers.has(PortEventType.RECONNECTION_FAILED)).toBe(true);
   });
   
-  test('handleAuthTokenUpdate should update token and start monitoring when isActive', () => {
+  test('handleAuthTokenUpdate should update token and start monitoring when not active', () => {
     // Arrange
     const mockMessage = { 
       type: Constants.AUTH_TOKEN_UPDATED_MESSAGE_TYPE,
@@ -146,7 +146,7 @@ describe('TeamsNotifierApp', () => {
     
     // Setup isActive to be true
     Object.defineProperty(mockMeetingMonitor, 'isActive', {
-      get: jest.fn().mockReturnValue(true)
+      get: jest.fn().mockReturnValue(false)
     });
     
     // Act - call the handler directly
@@ -163,7 +163,7 @@ describe('TeamsNotifierApp', () => {
     expect(app['authToken']).toBe('new-token');
   });
   
-  test('handleAuthTokenUpdate should not start monitoring when not active', () => {
+  test('handleAuthTokenUpdate should not start monitoring when active', () => {
     // Arrange
     const mockMessage = { 
       type: Constants.AUTH_TOKEN_UPDATED_MESSAGE_TYPE,
@@ -173,7 +173,7 @@ describe('TeamsNotifierApp', () => {
     
     // Setup isActive to be false
     Object.defineProperty(mockMeetingMonitor, 'isActive', {
-      get: jest.fn().mockReturnValue(false)
+      get: jest.fn().mockReturnValue(true)
     });
     
     // Act - call the handler directly
