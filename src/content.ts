@@ -4,6 +4,7 @@ import { DomWatcher } from './util/dom-watcher';
 import { MeetingMonitor } from './util/meeting-monitor';
 import { NotificationManager } from './util/notification-manager';
 import { TeamsNotifierApp } from './util/teams-notifier-app';
+import { Howl } from 'howler';
 
 Logger.setLogLevel(parseLogLevel(process.env.LOG_LEVEL)!);
 if (window.location.hostname === 'teams.microsoft.com') {
@@ -14,4 +15,3 @@ if (window.location.hostname === 'teams.microsoft.com') {
   const app = new TeamsNotifierApp(apiClient, meetingMonitor, notificationManager);
   app.start();
 }
-
