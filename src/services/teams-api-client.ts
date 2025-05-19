@@ -69,16 +69,9 @@ export class TeamsApiClient {
     Logger.trace('Response text from ' + urlString, responseText);
 
     const responseObject = JSON.parse(responseText) as {
-      value: any[];
+      value: CalendarEvent[];
     };
-
-    // Convert string dates back to Date objects
-    const events: CalendarEvent[] = responseObject.value.map(event => ({
-      ...event,
-      startTime: new Date(event.startTime),
-      endTime: new Date(event.endTime)
-    }));
-
-    return events;
+    
+    return responseObject.value;
   };
 }

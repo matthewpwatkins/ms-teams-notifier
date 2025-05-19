@@ -6,10 +6,10 @@ export type CalendarEvent = {
   objectId: string;
 
   /** The start time of the event */
-  startTime: Date;
+  startTime: string;
   
   /** The end time of the event */
-  endTime: Date;
+  endTime: string;
   
   /** The title or subject of the event */
   subject: string;

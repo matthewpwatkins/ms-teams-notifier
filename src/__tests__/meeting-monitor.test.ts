@@ -27,8 +27,8 @@ describe('MeetingMonitor', () => {
 
   const sampleEvents: CalendarEvent[] = [
     {
-      startTime: inOneMinute,
-      endTime: new Date(inOneMinute.getTime() + 30 * 60 * 1000),
+      startTime: inOneMinute.toUTCString(),
+      endTime: new Date(inOneMinute.getTime() + 30 * 60 * 1000).toUTCString(),
       subject: 'Upcoming Meeting',
       isAllDayEvent: false,
       isCancelled: false,
@@ -37,8 +37,8 @@ describe('MeetingMonitor', () => {
       objectId: 'object-123'
     },
     {
-      startTime: inThreeMinutes,
-      endTime: new Date(inThreeMinutes.getTime() + 30 * 60 * 1000),
+      startTime: inThreeMinutes.toUTCString(),
+      endTime: new Date(inThreeMinutes.getTime() + 30 * 60 * 1000).toUTCString(),
       subject: 'Another Upcoming Meeting',
       isAllDayEvent: false,
       isCancelled: false,
@@ -47,8 +47,8 @@ describe('MeetingMonitor', () => {
       objectId: 'object-456'
     },
     {
-      startTime: inOneHour,
-      endTime: new Date(inOneHour.getTime() + 30 * 60 * 1000),
+      startTime: inOneHour.toUTCString(),
+      endTime: new Date(inOneHour.getTime() + 30 * 60 * 1000).toUTCString(),
       subject: 'Later Meeting',
       isAllDayEvent: false,
       isCancelled: false,
@@ -57,8 +57,8 @@ describe('MeetingMonitor', () => {
       objectId: 'object-789'
     },
     {
-      startTime: now,
-      endTime: new Date(now.getTime() + 24 * 60 * 60 * 1000),
+      startTime: now.toUTCString(),
+      endTime: new Date(now.getTime() + 24 * 60 * 60 * 1000).toUTCString(),
       subject: 'All-day Meeting',
       isAllDayEvent: true,
       isCancelled: false,

@@ -169,7 +169,7 @@ export class MeetingMonitor {
       const proximalEvents = await this.apiClient.getEvents({
         startDate: meetingStartTimeWindowStart,
         endDate: meetingStartTimeWindowEnd
-      });
+      }) || [];
 
       const nextRingableEvent = this.getEarliestRingableEvent(proximalEvents, now);
       Logger.debug(`Next ringable event`, nextRingableEvent);
@@ -208,9 +208,12 @@ export class MeetingMonitor {
    * @private
    */
   private getEarliestRingableEvent(proximalEvents: CalendarEvent[], now: Date): CalendarEvent | null {
-    const sortedProximalEvents = proximalEvents.sort((a, b) =>
-      new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-    );
+    // Check if there are any events to process
+    if (!proximalEvents || proximalEvents.length === 0) {
+      return null;
+    }
+    
+    const sortedProximalEvents = [...proximalEvents].sort((a, b) => a.startTime.localeCompare(b.startTime));
 
     for (const event of sortedProximalEvents) {
       // TOOD: Maybe only ring for online meetings (event.isOnlineMeeting or event.skypeTeamsMeetingUrl)
@@ -219,13 +222,12 @@ export class MeetingMonitor {
         continue;
       }
 
-      const startTime = new Date(event.startTime).getTime();
-      const timeUntilStart = startTime - now.getTime();
-      if (timeUntilStart > Constants.NOTIFY_BEFORE_EVENT_START_MS) {
+      const msUntilStart = new Date(event.startTime).getTime() - now.getTime();
+      if (msUntilStart > Constants.NOTIFY_BEFORE_EVENT_START_MS) {
         // It starts too far in the future
         continue;
       }
-      if (timeUntilStart < -Constants.NOTIFY_AFTER_EVENT_START_MS) {
+      if (msUntilStart < -Constants.NOTIFY_AFTER_EVENT_START_MS) {
         // It started too long ago
         continue;
       }

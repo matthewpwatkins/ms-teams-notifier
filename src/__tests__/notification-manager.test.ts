@@ -71,8 +71,8 @@ describe('NotificationManager', () => {
     });
     
     mockEvent = {
-      startTime: new Date(Date.now() + 60 * 1000), // 1 minute from now
-      endTime: new Date(Date.now() + 60 * 60 * 1000),
+      startTime: new Date(Date.now() + 60 * 1000).toUTCString(), // 1 minute from now
+      endTime: new Date(Date.now() + 60 * 60 * 1000).toUTCString(),
       subject: 'Test Meeting',
       isAllDayEvent: false,
       isCancelled: false,

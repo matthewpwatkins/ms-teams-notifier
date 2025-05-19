@@ -47,8 +47,8 @@ describe('TeamsApiClient', () => {
       value: [
         {
           objectId: 'event-1',
-          startTime: startTime1,
-          endTime: endTime1,
+          startTime: startTime1.toUTCString(),
+          endTime: endTime1.toUTCString(),
           subject: 'Test Meeting 1',
           isAllDayEvent: false,
           isCancelled: false,
@@ -57,8 +57,8 @@ describe('TeamsApiClient', () => {
         },
         {
           objectId: 'event-2',
-          startTime: startTime2,
-          endTime: endTime2,
+          startTime: startTime2.toUTCString(),
+          endTime: endTime2.toUTCString(),
           subject: 'Test Meeting 2',
           isAllDayEvent: false,
           isCancelled: false,
@@ -168,15 +168,10 @@ describe('TeamsApiClient', () => {
     // Arrange
     apiClient.authToken = 'mock-token';
     
-    // Mock a successful response with specific data
-    const now = new Date();
-    const eventStartTime = new Date(now.getTime());
-    const eventEndTime = new Date(now.getTime() + 60 * 60 * 1000);
-    
     const specialEvent = {
       objectId: 'special-event',
-      startTime: eventStartTime,
-      endTime: eventEndTime,
+      startTime: 'special-start-time',
+      endTime: 'special-end-time',
       subject: 'Special Meeting',
       isAllDayEvent: false,
       isCancelled: false,
