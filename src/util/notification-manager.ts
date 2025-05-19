@@ -200,14 +200,14 @@ export class NotificationManager implements UpcomingMeetingListener {
     this.dismissButton.id = Constants.DISMISS_BUTTON_ID;
     this.dismissButton.style.padding = '4px 8px';
     this.dismissButton.style.cursor = 'pointer';
-    this.dismissButton.style.color = '#ffffff';
+    this.dismissButton.style.color = 'var(--colorNeutralForegroundOnBrand)';
     this.dismissButton.style.border = 'none';
     this.dismissButton.style.borderRadius = '4px';
     this.dismissButton.style.fontWeight = '600';
     this.dismissButton.style.fontFamily = "BlinkMacSystemFont, 'Segoe UI', system-ui, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Web', sans-serif";
     this.dismissButton.style.fontSize = '14px';
     this.dismissButton.style.textAlign = 'center';
-    this.dismissButton.style.backgroundColor = '#2977ff';
+    this.dismissButton.style.backgroundColor = 'var(--colorBrandBackground)';
     this.dismissButton.style.display = 'flex'; // Ensure flex layout
     this.dismissButton.style.alignItems = 'center'; // Vertically center icon and text
     this.dismissButton.onclick = () => this.stopNotification();
@@ -235,10 +235,10 @@ export class NotificationManager implements UpcomingMeetingListener {
 
     // Add hover effect
     this.dismissButton.onmouseover = () => {
-      this.dismissButton!.style.backgroundColor = '#0d65ff';
+      this.dismissButton!.style.backgroundColor = 'rgb(90, 94, 197)';
     };
     this.dismissButton.onmouseout = () => {
-      this.dismissButton!.style.backgroundColor = '#2977ff';
+      this.dismissButton!.style.backgroundColor = 'var(--colorBrandBackground)';
     };
 
     // Append the icon and button to the wrapper
