@@ -161,27 +161,31 @@ export class MeetingMonitor {
 
     try {
       // Get events for today
-      const today = new Date();
-      const startOfDay = new Date(today.setHours(0, 0, 0, 0));
-      const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+      const now = new Date();
+      const meetingStartTimeWindowStart = new Date(now.getTime() - (2 * (Constants.NOTIFY_AFTER_EVENT_START_MS)));
+      const meetingStartTimeWindowEnd = new Date(now.getTime() + (2 * Constants.NOTIFY_BEFORE_EVENT_START_MS));
 
-      const events = await this.apiClient.getEvents({
-        startDate: startOfDay,
-        endDate: endOfDay
+      Logger.debug(`Checking for upcoming meetings between ${meetingStartTimeWindowStart.toUTCString()} and ${meetingStartTimeWindowEnd.toUTCString()}`);
+      const proximalEvents = await this.apiClient.getEvents({
+        startDate: meetingStartTimeWindowStart,
+        endDate: meetingStartTimeWindowEnd
       });
 
-      const upcomingEvent = this.findNextUpcomingEvent(events);
+      const nextRingableEvent = this.getEarliestRingableEvent(proximalEvents, now);
+      Logger.debug(`Next ringable event`, nextRingableEvent);
 
-      if (upcomingEvent) {
+      if (nextRingableEvent) {
         // Only notify if we don't already have an active notification
-        if (!this.activeNotificationEvent) {
-          Logger.debug(`Found upcoming event: ${upcomingEvent.subject}`);
-          for (const listener of this.listeners) {
-            listener.onUpcomingMeeting(upcomingEvent);
-          }
+        if (this.activeNotificationEvent) {
+          Logger.debug('Already have an active notification, skipping');
+          return;
+        }
+
+        Logger.debug('Notifying listeners of upcoming meeting', nextRingableEvent, this.listeners);
+        for (const listener of this.listeners) {
+          listener.onUpcomingMeeting(nextRingableEvent);
         }
       } else {
-        // No upcoming events found, so notify listeners if we had an active notification
         if (this.activeNotificationEvent) {
           Logger.debug('No more upcoming events, clearing notifications');
           for (const listener of this.listeners) {
@@ -199,55 +203,38 @@ export class MeetingMonitor {
 
   /**
    * Finds the next upcoming meeting within the notification threshold
-   * @param events - List of calendar events to check
+   * @param proximalEvents - List of calendar events to check
    * @returns The next upcoming event, or null if none found
    * @private
    */
-  private findNextUpcomingEvent(events: CalendarEvent[]): CalendarEvent | null {
-    const now = Date.now();
-
-    // Filter out irrelevant events:
-    // - All-day events (as specified in requirements)
-    // - Cancelled events
-    // - Events that have already started
-    // - Events without online meeting URLs (likely not Teams meetings)
-    const relevantEvents = events.filter(event =>
-      !event.isAllDayEvent &&
-      !event.isCancelled &&
-      new Date(event.startTime).getTime() > now
-      // TOOD: Maybe make this configurable
-      // && event.isOnlineMeeting
-      // && event.skypeTeamsMeetingUrl
+  private getEarliestRingableEvent(proximalEvents: CalendarEvent[], now: Date): CalendarEvent | null {
+    const sortedProximalEvents = proximalEvents.sort((a, b) =>
+      new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
     );
 
-    Logger.debug(`Found ${relevantEvents.length} relevant events after filtering`);
-
-    // Find events starting within the notification threshold
-    const upcomingEvents = relevantEvents.filter(event => {
-      const startTime = new Date(event.startTime).getTime();
-      const timeUntilStart = startTime - now;
-      const isUpcoming = timeUntilStart <= Constants.EVENT_NOTIFICATION_THRESHOLD_MS;
-
-      if (isUpcoming) {
-        Logger.debug(`Event "${event.subject}" starting in ${Math.floor(timeUntilStart / 1000)} seconds`);
+    for (const event of sortedProximalEvents) {
+      // TOOD: Maybe only ring for online meetings (event.isOnlineMeeting or event.skypeTeamsMeetingUrl)
+      if (event.isAllDayEvent || event.isCancelled) {
+        // Skip all-day events and cancelled events
+        continue;
       }
 
-      return isUpcoming;
-    });
+      const startTime = new Date(event.startTime).getTime();
+      const timeUntilStart = startTime - now.getTime();
+      if (timeUntilStart > Constants.NOTIFY_BEFORE_EVENT_START_MS) {
+        // It starts too far in the future
+        continue;
+      }
+      if (timeUntilStart < -Constants.NOTIFY_AFTER_EVENT_START_MS) {
+        // It started too long ago
+        continue;
+      }
 
-    // If we have any events starting soon, return the earliest one
-    if (upcomingEvents.length > 0) {
-      upcomingEvents.sort((a, b) =>
-        new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-      );
-
-      const nextEvent = upcomingEvents[0];
-      const startTime = new Date(nextEvent.startTime);
-      Logger.debug(`Next upcoming event: "${nextEvent.subject}" at ${startTime.toLocaleTimeString()}`);
-
-      return nextEvent;
+      // This event is in the window
+      return event;
     }
 
+    // No events found in the window
     return null;
   }
 

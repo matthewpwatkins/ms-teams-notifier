@@ -5,9 +5,9 @@ export const Constants = {
   AUTH_TOKEN_COOKIE_NAME: 'authtoken',
   AUTH_TOKEN_COOKIE_DOMAIN: 'teams.microsoft.com',
   RINGTONE_URL: 'https://statics.teams.cdn.office.net/evergreen-assets/audio/ring.mp3',
-  EVENT_NOTIFICATION_THRESHOLD_MS: 2 * 60 * 1000, // 2 minutes
   EVENT_POLLING_INTERVAL_MS: 30 * 1000, // 30 seconds
-  NOTIFICATION_TIMEOUT_MS: 2 * 60 * 1000, // 2 minutes after event starts
+  NOTIFY_BEFORE_EVENT_START_MS: 2 * 60 * 1000, // 2 minutes
+  NOTIFY_AFTER_EVENT_START_MS: 2 * 60 * 1000, // 2 minutes after event starts
   DISMISS_BUTTON_ID: 'teams-notifier-dismiss-button',
   MORE_OPTIONS_HEADER_ID: 'more-options-header',
   PREJOIN_BUTTON: 'prejoin-join-button',

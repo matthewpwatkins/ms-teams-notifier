@@ -107,7 +107,7 @@ export class NotificationManager implements UpcomingMeetingListener {
     const timeUntilEventStarts = eventStartTime - now;
     
     // Calculate when to stop the notification
-    const notificationDuration = timeUntilEventStarts + Constants.NOTIFICATION_TIMEOUT_MS;
+    const notificationDuration = timeUntilEventStarts + Constants.NOTIFY_AFTER_EVENT_START_MS;
     
     this.notificationTimeout = this.window.setTimeout(() => {
       this.stopNotification();
