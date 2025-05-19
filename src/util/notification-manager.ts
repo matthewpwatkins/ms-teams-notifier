@@ -188,62 +188,20 @@ export class NotificationManager implements UpcomingMeetingListener {
       this.removeDismissButton();
     }
 
-    // Button wrapper
-    this.dismissButtonWrapper = this.document.createElement('div');
-    this.dismissButtonWrapper.className = 'fui-Primitive';
-    this.dismissButtonWrapper.style.marginRight = '8px';
-    this.dismissButtonWrapper.style.marginTop = '6px';
-    this.dismissButtonWrapper.style.display = 'inline-flex';
-    this.dismissButtonWrapper.style.alignItems = 'center';
-
-    // Button
-    this.dismissButton = this.document.createElement('button');
-    this.dismissButton.id = Constants.DISMISS_BUTTON_ID;
-    this.dismissButton.style.padding = '4px 8px';
-    this.dismissButton.style.cursor = 'pointer';
-    this.dismissButton.style.color = 'var(--colorNeutralForegroundOnBrand)';
-    this.dismissButton.style.border = 'none';
-    this.dismissButton.style.borderRadius = '4px';
-    this.dismissButton.style.fontWeight = '600';
-    this.dismissButton.style.fontFamily = "BlinkMacSystemFont, 'Segoe UI', system-ui, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Web', sans-serif";
-    this.dismissButton.style.fontSize = '14px';
-    this.dismissButton.style.textAlign = 'center';
-    this.dismissButton.style.backgroundColor = 'var(--colorBrandBackground)';
-    this.dismissButton.style.display = 'flex'; // Ensure flex layout
-    this.dismissButton.style.alignItems = 'center'; // Vertically center icon and text
+   // Get the wrapper and button elements
+    this.dismissButtonWrapper = this.createElementFromHTML(Constants.DISMISS_BUTTON_HTML) as HTMLDivElement;
+    this.dismissButton = this.dismissButtonWrapper.querySelector(`#${Constants.DISMISS_BUTTON_ID}`) as HTMLButtonElement;
+    
+    // Add event handlers (these can't be in the HTML template)
     this.dismissButton.onclick = () => this.stopNotification();
-
-    // Icon div
-    const iconDiv = this.document.createElement('div');
-    iconDiv.classList.add('ui-box');
-    iconDiv.style.width = '2rem';
-    iconDiv.style.display = 'flex';
-    iconDiv.style.alignItems = 'center';
-    iconDiv.style.justifyContent = 'center';
-
-    iconDiv.innerHTML = `<svg font-size="20" class="fui-Icon-regular" fill="currentColor" aria-hidden="true" width="1em" height="1em" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; display: block;">
-      ${Constants.PHONE_HANGUP_SVG_PATHS}
-    </svg>`;
-
-    // Dismiss text
-    const dismissSpan = this.document.createElement('span');
-    dismissSpan.style.display = 'inline';
-    dismissSpan.style.marginLeft = '0.5rem';
-    dismissSpan.textContent = 'Dismiss';
-
-    this.dismissButton.appendChild(iconDiv);
-    this.dismissButton.appendChild(dismissSpan);
-
+    
     // Add hover effect
     this.dismissButton.onmouseover = () => {
-      this.dismissButton!.style.backgroundColor = 'rgb(90, 94, 197)';
+      this.dismissButton!.style.backgroundColor = Constants.DISMISS_BUTTON_BG_HOVER_COLOR;
     };
     this.dismissButton.onmouseout = () => {
-      this.dismissButton!.style.backgroundColor = 'var(--colorBrandBackground)';
+      this.dismissButton!.style.backgroundColor = Constants.DISMISS_BUTTON_BG_COLOR;
     };
-
-    // Append the icon and button to the wrapper
-    this.dismissButtonWrapper.appendChild(this.dismissButton);
 
     // Insert the button before the more-options-header element
     this.insertDismissButton();
@@ -277,12 +235,20 @@ export class NotificationManager implements UpcomingMeetingListener {
     }
   }
 
+  private createElementFromHTML(html: string): HTMLElement {
+    const tempContainer = this.document.createElement('div');
+    tempContainer.innerHTML = html;
+    return tempContainer.firstElementChild as HTMLElement;
+  }
+
   /**
    * Inserts the dismiss button into the Teams UI
    * @private
    */
   private insertDismissButton(): void {
-    if (!this.dismissButtonWrapper) return;
+    if (!this.dismissButtonWrapper) {
+      return;
+    }
 
     const moreOptionsHeader = this.document.getElementById(Constants.MORE_OPTIONS_HEADER_ID);
     if (moreOptionsHeader && moreOptionsHeader.parentElement) {
