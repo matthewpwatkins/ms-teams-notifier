@@ -192,6 +192,7 @@ export class NotificationManager implements UpcomingMeetingListener {
     this.dismissButtonWrapper = this.document.createElement('div');
     this.dismissButtonWrapper.className = 'fui-Primitive';
     this.dismissButtonWrapper.style.marginRight = '8px';
+    this.dismissButtonWrapper.style.marginTop = '6px';
     this.dismissButtonWrapper.style.display = 'inline-flex';
     this.dismissButtonWrapper.style.alignItems = 'center';
 
@@ -221,13 +222,13 @@ export class NotificationManager implements UpcomingMeetingListener {
     iconDiv.style.justifyContent = 'center';
 
     iconDiv.innerHTML = `<svg font-size="20" class="fui-Icon-regular" fill="currentColor" aria-hidden="true" width="1em" height="1em" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; display: block;">
-      ${Constants.PHONE_ICON_SVG_PATH}
+      ${Constants.PHONE_HANGUP_SVG_PATHS}
     </svg>`;
 
     // Dismiss text
     const dismissSpan = this.document.createElement('span');
     dismissSpan.style.display = 'inline';
-    dismissSpan.style.marginLeft = '0.25rem';
+    dismissSpan.style.marginLeft = '0.5rem';
     dismissSpan.textContent = 'Dismiss';
 
     this.dismissButton.appendChild(iconDiv);
