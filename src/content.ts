@@ -7,6 +7,17 @@ import { TeamsNotifierApp } from './util/teams-notifier-app';
 import { Howl } from 'howler';
 
 Logger.setLogLevel(parseLogLevel(process.env.LOG_LEVEL)!);
+
+// Check if we're on the launcher page
+if (window.location.href.includes('teams.microsoft.com/dl/launcher/launcher.html')) {
+  Logger.debug('Detected Teams launcher page, looking for joinOnWeb button');
+  const joinOnWebButton = document.querySelector('button[data-tid="joinOnWeb"]');
+  if (joinOnWebButton) {
+    Logger.debug('Found joinOnWeb button, clicking it');
+    (joinOnWebButton as HTMLButtonElement).click();
+  }
+}
+
 if (window.location.hostname === 'teams.microsoft.com') {
   const apiClient = new TeamsApiClient();
   const domWatcher = new DomWatcher((callback) => new MutationObserver(callback));

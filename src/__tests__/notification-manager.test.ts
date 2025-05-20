@@ -88,7 +88,7 @@ describe('NotificationManager', () => {
     jest.clearAllMocks();
   });
 
-  test('should create dismiss button when receiving upcoming meeting notification', () => {
+  test('should create notification buttons when receiving upcoming meeting notification', () => {
     // Act
     notificationManager.onUpcomingMeeting(mockEvent);
     
@@ -96,10 +96,14 @@ describe('NotificationManager', () => {
     // Check if we set the active notification
     expect(mockMeetingMonitor.setActiveNotification).toHaveBeenCalledWith(mockEvent);
     
-    // Check if button was created
+    // Check if buttons were created
     const dismissButton = document.getElementById(Constants.DISMISS_BUTTON_ID);
     expect(dismissButton).not.toBeNull();
     expect(dismissButton?.textContent).toContain('Dismiss');
+    
+    const joinButton = document.getElementById(Constants.JOIN_BUTTON_ID);
+    expect(joinButton).not.toBeNull();
+    expect(joinButton?.textContent).toContain('Join Call');
   });
 
   test('should not create new notification if ringtone is already playing', () => {
@@ -129,6 +133,7 @@ describe('NotificationManager', () => {
     // Assert
     expect(mockMeetingMonitor.setActiveNotification).not.toHaveBeenCalled();
     expect(document.getElementById(Constants.DISMISS_BUTTON_ID)).toBeNull();
+    expect(document.getElementById(Constants.JOIN_BUTTON_ID)).toBeNull();
   });
 
   test('should remove button and stop ringtone when no upcoming meetings', () => {
@@ -146,6 +151,7 @@ describe('NotificationManager', () => {
     // Assert
     expect(mockRingtone.stop).toHaveBeenCalled();
     expect(document.getElementById(Constants.DISMISS_BUTTON_ID)).toBeNull();
+    expect(document.getElementById(Constants.JOIN_BUTTON_ID)).toBeNull();
     expect(mockMeetingMonitor.setActiveNotification).toHaveBeenCalledWith(null);
   });
   
@@ -165,6 +171,52 @@ describe('NotificationManager', () => {
     expect(mockRingtone.stop).toHaveBeenCalled();
     expect(mockRingtone.unload).toHaveBeenCalled();
     expect(document.getElementById(Constants.DISMISS_BUTTON_ID)).toBeNull();
+    expect(document.getElementById(Constants.JOIN_BUTTON_ID)).toBeNull();
     expect(mockDomWatcher.unsubscribe).toHaveBeenCalled();
+  });
+
+  test('should open meeting URL when join button is clicked', () => {
+    // Arrange
+    // Mock window.open
+    const originalWindowOpen = window.open;
+    window.open = jest.fn();
+    
+    // Create notification buttons
+    notificationManager.onUpcomingMeeting(mockEvent);
+    
+    // Get the join button
+    const joinButton = document.getElementById(Constants.JOIN_BUTTON_ID) as HTMLButtonElement;
+    expect(joinButton).not.toBeNull();
+    
+    // Mock ringtone as playing for the assertion after click
+    const mockRingtone = mockHowlFactory.mock.results[0].value;
+    mockRingtone.playing.mockReturnValue(true);
+    
+    // Set timeout mock to capture calls to window.setTimeout
+    const originalSetTimeout = window.setTimeout;
+    const mockedSetTimeout = jest.fn().mockImplementation((callback, delay) => {
+      // Immediately execute callbacks for launcher page detection
+      if (typeof callback === 'function' && delay <= 1000) {
+        callback();
+      }
+      return 123; // Mock timer ID
+    });
+    window.setTimeout = mockedSetTimeout as any;
+    
+    // Act
+    // Simulate click on join button
+    joinButton.click();
+    
+    // Assert
+    expect(window.open).toHaveBeenCalledWith(mockEvent.skypeTeamsMeetingUrl, '_self');
+    
+    // Should also stop the notification
+    expect(mockRingtone.stop).toHaveBeenCalled();
+    expect(document.getElementById(Constants.JOIN_BUTTON_ID)).toBeNull();
+    expect(document.getElementById(Constants.DISMISS_BUTTON_ID)).toBeNull();
+    
+    // Restore window functions
+    window.open = originalWindowOpen;
+    window.setTimeout = originalSetTimeout;
   });
 });

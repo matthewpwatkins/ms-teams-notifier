@@ -9,15 +9,27 @@ export const Constants = {
   NOTIFY_BEFORE_EVENT_START_MS: 2 * 60 * 1000, // 2 minutes
   NOTIFY_AFTER_EVENT_START_MS: 2 * 60 * 1000, // 2 minutes after event starts
   DISMISS_BUTTON_ID: 'teams-notifier-dismiss-button',
+  JOIN_BUTTON_ID: 'teams-notifier-join-button',
   MORE_OPTIONS_HEADER_ID: 'more-options-header',
   PREJOIN_BUTTON: 'prejoin-join-button',
   HANGUP_BUTTON_ID: 'hangup-button',
-  PHONE_ICON_SVG_PATH: `<path d="m6.99 2.07-.72.21a3.5 3.5 0 0 0-2.45 2.86c-.3 2.06.36 4.48 1.96 7.25 1.6 2.77 3.36 4.55 5.3 5.33a3.5 3.5 0 0 0 3.7-.7l.55-.52a2 2 0 0 0 .25-2.62L14.22 12a1.5 1.5 0 0 0-1.65-.56l-2.05.63-.06.01c-.22.04-.74-.45-1.4-1.58-.67-1.18-.82-1.87-.63-2.04l1.05-.98a2.5 2.5 0 0 0 .57-2.85l-.66-1.47a2 2 0 0 0-2.4-1.1Zm1.49 1.5.66 1.47a1.5 1.5 0 0 1-.35 1.71l-1.04.98c-.67.63-.45 1.71.45 3.27.85 1.47 1.62 2.19 2.45 2.06l.12-.02 2.09-.64a.5.5 0 0 1 .55.19l1.36 1.88a1 1 0 0 1-.13 1.3l-.54.52a2.5 2.5 0 0 1-2.65.5c-1.7-.68-3.3-2.3-4.8-4.9-1.5-2.59-2.1-4.8-1.84-6.61a2.5 2.5 0 0 1 1.75-2.04l.72-.22a1 1 0 0 1 1.2.55Z" fill="currentColor"></path>`,
+  PHONE_ICON_SVG_PATH: `<path d="M6.98 2.06c-.65.2-1.22.62-1.58 1.2-.93.72-1.05 2.5-.5 4.5.62 2.69 2.28 5.6 4.5 7.9 2.2 2.28 4.87 3.8 7.24 4.12.32.04.79.04 1.05 0 .78-.12 1.36-.57 1.85-1.41.13-.22.14-.25.32-.63.07-.15.15-.3.17-.33l.06-.1a.97.97 0 0 0-.13-.83l-.48-.66c-.6-.83-.7-.95-.85-1.1-.33-.35-.66-.5-1.04-.5-.11 0-.3.04-.57.13l-.9.28-.34.1-.09.02c-.75.15-1.28.07-1.88-.25a8.95 8.95 0 0 1-2.15-1.67c-.62-.64-1.25-1.51-1.62-2.26-.33-.67-.4-1.17-.24-1.66.04-.13.1-.2.76-.82l.7-.67c.19-.19.21-.23.21-.36 0-.22-.5-1.15-.93-1.76-.15-.2-.54-.69-.62-.79-.32-.35-.65-.5-1.04-.5-.12 0-.15 0-.32.07l-.62.18Z" fill="currentColor"></path>`,
   PHONE_HANGUP_SVG_PATHS: `<path d="m17.96 10.94-.16.83c-.15.78-.87 1.3-1.7 1.22l-1.63-.16c-.72-.07-1.25-.59-1.47-1.33-.3-1-.5-1.75-.5-1.75a6.63 6.63 0 0 0-5 0s-.2.75-.5 1.75c-.2.67-.5 1.26-1.2 1.33l-1.63.16c-.81.08-1.6-.43-1.82-1.2l-.25-.84c-.25-.82-.03-1.7.58-2.28C4.1 7.3 6.67 6.51 9.99 6.5c3.33 0 5.6.78 7.16 2.16.66.58.97 1.46.8 2.28Z" fill="currentColor"></path>`,
+  JOIN_BUTTON_SVG_PATHS: `<path d="M10 2a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm.5 13h-1v-5h1zm0-6h-1V7h1z" fill="currentColor"></path>`,
   DISMISS_BUTTON_BG_COLOR: 'var(--colorBrandBackground)',
   DISMISS_BUTTON_BG_HOVER_COLOR: 'rgb(90, 94, 197)',
-  DISMISS_BUTTON_HTML: `
-    <div class="fui-Primitive" style="margin-right: 8px; margin-top: 6px; display: inline-flex; align-items: center;">
+  JOIN_BUTTON_BG_COLOR: 'rgb(38, 132, 71)', // Green color for the join button
+  JOIN_BUTTON_BG_HOVER_COLOR: 'rgb(33, 115, 62)',
+  NOTIFICATION_BUTTONS_HTML: `
+    <div class="fui-Primitive" style="margin-right: 8px; margin-top: 6px; display: inline-flex; align-items: center; gap: 8px;">
+      <button id="teams-notifier-join-button" style="padding: 4px 8px; cursor: pointer; color: white; border: none; border-radius: 4px; font-weight: 600; font-family: BlinkMacSystemFont, 'Segoe UI', system-ui, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Web', sans-serif; font-size: 14px; text-align: center; background-color: rgb(38, 132, 71); display: flex; align-items: center;">
+        <div class="ui-box" style="width: 2rem; display: flex; align-items: center; justify-content: center;">
+          <svg font-size="20" class="fui-Icon-regular" fill="currentColor" aria-hidden="true" width="1em" height="1em" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; display: block;">
+            <path d="M6.98 2.06c-.65.2-1.22.62-1.58 1.2-.93.72-1.05 2.5-.5 4.5.62 2.69 2.28 5.6 4.5 7.9 2.2 2.28 4.87 3.8 7.24 4.12.32.04.79.04 1.05 0 .78-.12 1.36-.57 1.85-1.41.13-.22.14-.25.32-.63.07-.15.15-.3.17-.33l.06-.1a.97.97 0 0 0-.13-.83l-.48-.66c-.6-.83-.7-.95-.85-1.1-.33-.35-.66-.5-1.04-.5-.11 0-.3.04-.57.13l-.9.28-.34.1-.09.02c-.75.15-1.28.07-1.88-.25a8.95 8.95 0 0 1-2.15-1.67c-.62-.64-1.25-1.51-1.62-2.26-.33-.67-.4-1.17-.24-1.66.04-.13.1-.2.76-.82l.7-.67c.19-.19.21-.23.21-.36 0-.22-.5-1.15-.93-1.76-.15-.2-.54-.69-.62-.79-.32-.35-.65-.5-1.04-.5-.12 0-.15 0-.32.07l-.62.18Z" fill="currentColor"></path>
+          </svg>
+        </div>
+        <span style="display: inline; margin-left: 0.5rem;">Join Call</span>
+      </button>
       <button id="teams-notifier-dismiss-button" style="padding: 4px 8px; cursor: pointer; color: var(--colorNeutralForegroundOnBrand); border: none; border-radius: 4px; font-weight: 600; font-family: BlinkMacSystemFont, 'Segoe UI', system-ui, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Web', sans-serif; font-size: 14px; text-align: center; background-color: var(--colorBrandBackground); display: flex; align-items: center;">
         <div class="ui-box" style="width: 2rem; display: flex; align-items: center; justify-content: center;">
           <svg font-size="20" class="fui-Icon-regular" fill="currentColor" aria-hidden="true" width="1em" height="1em" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; display: block;">

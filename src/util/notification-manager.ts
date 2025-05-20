@@ -18,7 +18,8 @@ export class NotificationManager implements UpcomingMeetingListener {
   private ringtone: Howl | null = null;
   private isRinging: boolean = false;
   private dismissButton: HTMLButtonElement | null = null;
-  private dismissButtonWrapper: HTMLDivElement | null = null;
+  private joinButton: HTMLButtonElement | null = null;
+  private notificationButtonsWrapper: HTMLDivElement | null = null;
   private notificationTimeout: number | null = null;
   private currentEvent: CalendarEvent | null = null;
   private dismissedEvents: Set<string> = new Set();
@@ -90,8 +91,8 @@ export class NotificationManager implements UpcomingMeetingListener {
       this.meetingMonitor.setActiveNotification(event);
     }
 
-    // Create the dismiss button
-    this.createDismissButton();
+    // Create notification buttons (join and dismiss)
+    this.createNotificationButtons();
 
     // Start playing the ringtone
     this.startRingtone();
@@ -178,33 +179,93 @@ export class NotificationManager implements UpcomingMeetingListener {
   }
 
   /**
-   * Creates and styles the dismiss button for an event notification
-   * @param event - The calendar event for which to create the dismiss button
+   * Creates and styles the join and dismiss buttons for an event notification
    * @private
    */
-  private createDismissButton(): void {
-    if (this.dismissButton) {
-      // Button already exists, remove it first
-      this.removeDismissButton();
+  private createNotificationButtons(): void {
+    if (this.notificationButtonsWrapper) {
+      // Buttons already exist, remove them first
+      this.removeNotificationButtons();
     }
 
-   // Get the wrapper and button elements
-    this.dismissButtonWrapper = this.createElementFromHTML(Constants.DISMISS_BUTTON_HTML) as HTMLDivElement;
-    this.dismissButton = this.dismissButtonWrapper.querySelector(`#${Constants.DISMISS_BUTTON_ID}`) as HTMLButtonElement;
+    // Get the wrapper and button elements
+    this.notificationButtonsWrapper = this.createElementFromHTML(Constants.NOTIFICATION_BUTTONS_HTML) as HTMLDivElement;
     
-    // Add event handlers (these can't be in the HTML template)
-    this.dismissButton.onclick = () => this.stopNotification();
+    // Only create join button if current event has a meeting URL
+    const hasValidMeetingUrl = this.currentEvent && 
+                               this.currentEvent.isOnlineMeeting && 
+                               this.currentEvent.skypeTeamsMeetingUrl;
+                               
+    if (hasValidMeetingUrl) {
+      this.joinButton = this.notificationButtonsWrapper.querySelector(`#${Constants.JOIN_BUTTON_ID}`) as HTMLButtonElement;
+      
+      // Add event handlers for join button
+      if (this.joinButton) {
+        this.joinButton.onclick = () => {
+          if (this.currentEvent && this.currentEvent.isOnlineMeeting && this.currentEvent.skypeTeamsMeetingUrl) {
+            // First stop the notification
+            this.stopNotification();
+            
+            // Then navigate to the meeting URL
+            this.window.open(this.currentEvent.skypeTeamsMeetingUrl, '_self');
+            
+            // Set up a handler to automatically click the "Join on web" button if on the launcher page
+            const checkLauncherPage = () => {
+              // Check if we're on the launcher page
+              if (this.window.location.href.includes('teams.microsoft.com/dl/launcher/launcher.html')) {
+                Logger.debug('Detected Teams launcher page, looking for joinOnWeb button');
+                
+                const joinOnWebButton = this.document.querySelector('button[data-tid="joinOnWeb"]');
+                if (joinOnWebButton) {
+                  Logger.debug('Found joinOnWeb button, clicking it');
+                  (joinOnWebButton as HTMLButtonElement).click();
+                } else {
+                  // Button might not be loaded yet, retry after a short delay
+                  this.window.setTimeout(checkLauncherPage, 500);
+                }
+              }
+            };
+            
+            // Check for launcher page after a short delay to allow navigation
+            this.window.setTimeout(checkLauncherPage, 1000);
+          } else {
+            Logger.warn('No meeting URL available for this event');
+          }
+        };
+        
+        // Add hover effect for join button
+        this.joinButton.onmouseover = () => {
+          this.joinButton!.style.backgroundColor = Constants.JOIN_BUTTON_BG_HOVER_COLOR;
+        };
+        this.joinButton.onmouseout = () => {
+          this.joinButton!.style.backgroundColor = Constants.JOIN_BUTTON_BG_COLOR;
+        };
+      }
+    } else {
+      // If there's no join button element in the wrapper, remove it from the DOM
+      const joinButtonElement = this.notificationButtonsWrapper.querySelector(`#${Constants.JOIN_BUTTON_ID}`);
+      if (joinButtonElement) {
+        joinButtonElement.remove();
+      }
+    }
     
-    // Add hover effect
-    this.dismissButton.onmouseover = () => {
-      this.dismissButton!.style.backgroundColor = Constants.DISMISS_BUTTON_BG_HOVER_COLOR;
-    };
-    this.dismissButton.onmouseout = () => {
-      this.dismissButton!.style.backgroundColor = Constants.DISMISS_BUTTON_BG_COLOR;
-    };
+    this.dismissButton = this.notificationButtonsWrapper.querySelector(`#${Constants.DISMISS_BUTTON_ID}`) as HTMLButtonElement;
+    
+    // Add event handlers for dismiss button
+    if (this.dismissButton) {
+      this.dismissButton.onclick = () => this.stopNotification();
+      
+      // Add hover effect for dismiss button
+      this.dismissButton.onmouseover = () => {
+        this.dismissButton!.style.backgroundColor = Constants.DISMISS_BUTTON_BG_HOVER_COLOR;
+      };
+      this.dismissButton.onmouseout = () => {
+        this.dismissButton!.style.backgroundColor = Constants.DISMISS_BUTTON_BG_COLOR;
+      };
+    }
 
-    // Insert the button before the more-options-header element
-    this.insertDismissButton();
+    // Insert the buttons before the more-options-header element
+    this.insertNotificationButtons();
 
     // If we couldn't find the target element immediately, retry a few times
     // as the Teams UI might still be loading
@@ -215,22 +276,28 @@ export class NotificationManager implements UpcomingMeetingListener {
     const retryInsert = () => {
       if (retryCount < maxRetries) {
         this.window.setTimeout(() => {
-          if (!this.document.getElementById(Constants.DISMISS_BUTTON_ID)) {
+          if (!this.document.getElementById(Constants.JOIN_BUTTON_ID) && 
+              !this.document.getElementById(Constants.DISMISS_BUTTON_ID)) {
             retryCount++;
-            this.insertDismissButton();
-            Logger.trace(`Retry ${retryCount}/${maxRetries} to insert dismiss button`);
+            this.insertNotificationButtons();
+            Logger.trace(`Retry ${retryCount}/${maxRetries} to insert notification buttons`);
             
-            if (!this.document.getElementById(Constants.DISMISS_BUTTON_ID)) {
+            if (!this.document.getElementById(Constants.JOIN_BUTTON_ID) && 
+                !this.document.getElementById(Constants.DISMISS_BUTTON_ID)) {
               retryInsert();
             }
           }
         }, retryInterval);
       } else {
-        Logger.warn('Failed to insert dismiss button after maximum retries');
+        Logger.warn('Failed to insert notification buttons after maximum retries');
       }
     };
 
-    if (!this.document.getElementById(Constants.DISMISS_BUTTON_ID)) {
+    // If we have a non-empty wrapper but couldn't insert the buttons, retry
+    if (this.notificationButtonsWrapper && 
+        this.notificationButtonsWrapper.children.length > 0 &&
+        !this.document.getElementById(Constants.DISMISS_BUTTON_ID) &&
+        (!this.document.getElementById(Constants.JOIN_BUTTON_ID) || !hasValidMeetingUrl)) {
       retryInsert();
     }
   }
@@ -242,33 +309,34 @@ export class NotificationManager implements UpcomingMeetingListener {
   }
 
   /**
-   * Inserts the dismiss button into the Teams UI
+   * Inserts the notification buttons into the Teams UI
    * @private
    */
-  private insertDismissButton(): void {
-    if (!this.dismissButtonWrapper) {
+  private insertNotificationButtons(): void {
+    if (!this.notificationButtonsWrapper) {
       return;
     }
 
     const moreOptionsHeader = this.document.getElementById(Constants.MORE_OPTIONS_HEADER_ID);
     if (moreOptionsHeader && moreOptionsHeader.parentElement) {
-      moreOptionsHeader.parentElement.insertBefore(this.dismissButtonWrapper, moreOptionsHeader);
-      Logger.trace('Dismiss button inserted successfully');
+      moreOptionsHeader.parentElement.insertBefore(this.notificationButtonsWrapper, moreOptionsHeader);
+      Logger.trace('Notification buttons inserted successfully');
     } else {
-      Logger.warn('Could not find more-options-header element to insert dismiss button');
+      Logger.warn('Could not find more-options-header element to insert notification buttons');
     }
   }
 
   /**
-   * Removes the dismiss button from the DOM
+   * Removes the notification buttons from the DOM
    * @private
    */
-  private removeDismissButton(): void {
-    if (this.dismissButtonWrapper && this.dismissButtonWrapper.parentElement) {
-      this.dismissButtonWrapper.parentElement.removeChild(this.dismissButtonWrapper);
-      this.dismissButtonWrapper = null;
+  private removeNotificationButtons(): void {
+    if (this.notificationButtonsWrapper && this.notificationButtonsWrapper.parentElement) {
+      this.notificationButtonsWrapper.parentElement.removeChild(this.notificationButtonsWrapper);
+      this.notificationButtonsWrapper = null;
+      this.joinButton = null;
       this.dismissButton = null;
-      Logger.debug('Dismiss button removed');
+      Logger.debug('Notification buttons removed');
     }
   }
 
@@ -279,7 +347,7 @@ export class NotificationManager implements UpcomingMeetingListener {
   private stopNotification(): void {
     Logger.debug('Stopping notification');
     this.stopRingtone();
-    this.removeDismissButton();
+    this.removeNotificationButtons();
     
     if (this.notificationTimeout !== null) {
       this.window.clearTimeout(this.notificationTimeout);
