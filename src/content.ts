@@ -24,5 +24,31 @@ if (window.location.hostname === 'teams.microsoft.com') {
   const meetingMonitor = new MeetingMonitor(apiClient);
   const notificationManager = new NotificationManager(window, document, domWatcher, meetingMonitor, options => new Howl(options));
   const app = new TeamsNotifierApp(apiClient, meetingMonitor, notificationManager);
-  app.start();
+
+  // Start the app once the DOM is ready
+  let appStarted = false;
+  const onDomChange = () => {
+    if (appStarted) {
+      Logger.debug('App already started, ignoring DOM change');
+      return;
+    }
+
+    const loadingScreen = document.getElementById('loading-screen');
+    if (loadingScreen) {
+      Logger.debug('Loading screen detected, waiting for it to disappear');
+      return;
+    }
+    
+    const appLayoutArea = document.querySelector('[data-tid="app-layout-area--nav"]');
+    if (!appLayoutArea) {
+      Logger.debug('App layout area not found, waiting for it to appear');
+      return;
+    }
+    
+    Logger.debug('Detected Teams app layout area, starting app');
+    app.start();
+    appStarted = true;
+    domWatcher.unsubscribe(onDomChange);
+  };
+  domWatcher.subscribe(onDomChange);
 }

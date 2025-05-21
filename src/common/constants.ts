@@ -8,8 +8,8 @@ export const Constants = {
   AUTH_TOKEN_COOKIE_DOMAIN: 'teams.microsoft.com',
   RINGTONE_URL: 'https://statics.teams.cdn.office.net/evergreen-assets/audio/ring.mp3',
   EVENT_POLLING_INTERVAL_MS: 30 * 1000, // 30 seconds
-  NOTIFY_BEFORE_EVENT_START_MS: 180 * 2 * 60 * 1000, // 2 minutes
-  NOTIFY_AFTER_EVENT_START_MS: 180 * 2 * 60 * 1000, // 2 minutes after event starts
+  NOTIFY_BEFORE_EVENT_START_MS: 2 * 60 * 1000, // 2 minutes before event starts
+  NOTIFY_AFTER_EVENT_START_MS: 2 * 60 * 1000, // 2 minutes after event starts
   DISMISS_BUTTON_ID: 'teams-notifier-dismiss-button',
   JOIN_BUTTON_ID: 'teams-notifier-join-button',
   MORE_OPTIONS_HEADER_ID: 'more-options-header',

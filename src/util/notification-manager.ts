@@ -14,7 +14,7 @@ export class NotificationManager implements UpcomingMeetingListener {
   private readonly document: Document;
   private readonly window: Window;
   private readonly domWatcher: DomWatcher;
-  
+
   private ringtone: Howl | null = null;
   private isRinging: boolean = false;
   private dismissButton: HTMLButtonElement | null = null;
@@ -40,7 +40,7 @@ export class NotificationManager implements UpcomingMeetingListener {
     howlFactory: (options: HowlOptions) => Howl
   ) {
     this.window = window;
-    this.document = document;    
+    this.document = document;
     this.domWatcher = domWatcher;
     this.meetingMonitor = meetingMonitor;
 
@@ -85,7 +85,7 @@ export class NotificationManager implements UpcomingMeetingListener {
 
     Logger.debug(`Showing notification for upcoming event: ${event.subject}`);
     this.currentEvent = event;
-    
+
     // Update the active notification in the meeting monitor
     if (this.meetingMonitor) {
       this.meetingMonitor.setActiveNotification(event);
@@ -106,10 +106,10 @@ export class NotificationManager implements UpcomingMeetingListener {
     const eventStartTime = new Date(event.startTime).getTime();
     const now = Date.now();
     const timeUntilEventStarts = eventStartTime - now;
-    
+
     // Calculate when to stop the notification
     const notificationDuration = timeUntilEventStarts + Constants.NOTIFY_AFTER_EVENT_START_MS;
-    
+
     this.notificationTimeout = this.window.setTimeout(() => {
       this.stopNotification();
     }, notificationDuration);
@@ -129,7 +129,7 @@ export class NotificationManager implements UpcomingMeetingListener {
    */
   public dispose(): void {
     this.stopNotification();
-    
+
     if (this.ringtone) {
       this.ringtone.unload();
       this.ringtone = null;
@@ -190,49 +190,19 @@ export class NotificationManager implements UpcomingMeetingListener {
 
     // Get the wrapper and button elements
     this.notificationButtonsWrapper = this.createElementFromHTML(Constants.NOTIFICATION_BUTTONS_HTML) as HTMLDivElement;
-    
-    // Only create join button if current event has a meeting URL
-    const hasValidMeetingUrl = this.currentEvent && 
-                               this.currentEvent.isOnlineMeeting && 
-                               this.currentEvent.skypeTeamsMeetingUrl;
-                               
+
+    const hasValidMeetingUrl = !!(this.currentEvent?.skypeTeamsMeetingUrl);
     if (hasValidMeetingUrl) {
       this.joinButton = this.notificationButtonsWrapper.querySelector(`#${Constants.JOIN_BUTTON_ID}`) as HTMLButtonElement;
-      
+
       // Add event handlers for join button
       if (this.joinButton) {
         this.joinButton.onclick = () => {
-          if (this.currentEvent && this.currentEvent.isOnlineMeeting && this.currentEvent.skypeTeamsMeetingUrl) {
-            // First stop the notification
-            this.stopNotification();
-            
-            // Then navigate to the meeting URL
-            this.window.open(this.currentEvent.skypeTeamsMeetingUrl, '_self');
-            
-            // Set up a handler to automatically click the "Join on web" button if on the launcher page
-            const checkLauncherPage = () => {
-              // Check if we're on the launcher page
-              if (this.window.location.href.includes('teams.microsoft.com/dl/launcher/launcher.html')) {
-                Logger.debug('Detected Teams launcher page, looking for joinOnWeb button');
-                
-                const joinOnWebButton = this.document.querySelector('button[data-tid="joinOnWeb"]');
-                if (joinOnWebButton) {
-                  Logger.debug('Found joinOnWeb button, clicking it');
-                  (joinOnWebButton as HTMLButtonElement).click();
-                } else {
-                  // Button might not be loaded yet, retry after a short delay
-                  this.window.setTimeout(checkLauncherPage, 500);
-                }
-              }
-            };
-            
-            // Check for launcher page after a short delay to allow navigation
-            this.window.setTimeout(checkLauncherPage, 1000);
-          } else {
-            Logger.warn('No meeting URL available for this event');
-          }
+          const url = this.currentEvent!.skypeTeamsMeetingUrl;
+          this.stopNotification();
+          this.window.open(url, '_self');
         };
-        
+
         // Add hover effect for join button
         this.joinButton.onmouseover = () => {
           this.joinButton!.style.backgroundColor = Constants.JOIN_BUTTON_BG_HOVER_COLOR;
@@ -248,13 +218,13 @@ export class NotificationManager implements UpcomingMeetingListener {
         joinButtonElement.remove();
       }
     }
-    
+
     this.dismissButton = this.notificationButtonsWrapper.querySelector(`#${Constants.DISMISS_BUTTON_ID}`) as HTMLButtonElement;
-    
+
     // Add event handlers for dismiss button
     if (this.dismissButton) {
       this.dismissButton.onclick = () => this.stopNotification();
-      
+
       // Add hover effect for dismiss button
       this.dismissButton.onmouseover = () => {
         this.dismissButton!.style.backgroundColor = Constants.DISMISS_BUTTON_BG_HOVER_COLOR;
@@ -276,14 +246,14 @@ export class NotificationManager implements UpcomingMeetingListener {
     const retryInsert = () => {
       if (retryCount < maxRetries) {
         this.window.setTimeout(() => {
-          if (!this.document.getElementById(Constants.JOIN_BUTTON_ID) && 
-              !this.document.getElementById(Constants.DISMISS_BUTTON_ID)) {
+          if (!this.document.getElementById(Constants.JOIN_BUTTON_ID) &&
+            !this.document.getElementById(Constants.DISMISS_BUTTON_ID)) {
             retryCount++;
             this.insertNotificationButtons();
             Logger.trace(`Retry ${retryCount}/${maxRetries} to insert notification buttons`);
-            
-            if (!this.document.getElementById(Constants.JOIN_BUTTON_ID) && 
-                !this.document.getElementById(Constants.DISMISS_BUTTON_ID)) {
+
+            if (!this.document.getElementById(Constants.JOIN_BUTTON_ID) &&
+              !this.document.getElementById(Constants.DISMISS_BUTTON_ID)) {
               retryInsert();
             }
           }
@@ -294,10 +264,10 @@ export class NotificationManager implements UpcomingMeetingListener {
     };
 
     // If we have a non-empty wrapper but couldn't insert the buttons, retry
-    if (this.notificationButtonsWrapper && 
-        this.notificationButtonsWrapper.children.length > 0 &&
-        !this.document.getElementById(Constants.DISMISS_BUTTON_ID) &&
-        (!this.document.getElementById(Constants.JOIN_BUTTON_ID) || !hasValidMeetingUrl)) {
+    if (this.notificationButtonsWrapper &&
+      this.notificationButtonsWrapper.children.length > 0 &&
+      !this.document.getElementById(Constants.DISMISS_BUTTON_ID) &&
+      (!this.document.getElementById(Constants.JOIN_BUTTON_ID) || !hasValidMeetingUrl)) {
       retryInsert();
     }
   }
@@ -348,22 +318,22 @@ export class NotificationManager implements UpcomingMeetingListener {
     Logger.debug('Stopping notification');
     this.stopRingtone();
     this.removeNotificationButtons();
-    
+
     if (this.notificationTimeout !== null) {
       this.window.clearTimeout(this.notificationTimeout);
       this.notificationTimeout = null;
     }
-    
+
     // Mark current event as dismissed
     if (this.currentEvent) {
       this.dismissedEvents.add(this.currentEvent.objectId);
     }
-    
+
     // Clear the active notification in the meeting monitor
     if (this.meetingMonitor) {
       this.meetingMonitor.setActiveNotification(null);
     }
-    
+
     this.currentEvent = null;
   }
 
