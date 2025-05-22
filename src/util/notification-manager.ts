@@ -146,7 +146,6 @@ export class NotificationManager implements UpcomingMeetingListener {
 
     // Stop ringing if the user is newly in a call
     if (this.isRinging && !this.userIsJoiningOrInCall && userIsNowJoiningOrInCall) {
-
       Logger.debug('User is now joining or in a call - stopping any ringing notification');
       this.stopNotification();
     }

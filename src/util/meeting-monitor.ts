@@ -216,7 +216,7 @@ export class MeetingMonitor {
     const sortedProximalEvents = [...proximalEvents].sort((a, b) => a.startTime.localeCompare(b.startTime));
 
     for (const event of sortedProximalEvents) {
-      // TOOD: Maybe only ring for online meetings (event.isOnlineMeeting or event.skypeTeamsMeetingUrl)
+      // TODO: Maybe only ring for online meetings (event.isOnlineMeeting or event.skypeTeamsMeetingUrl)
       if (event.isAllDayEvent || event.isCancelled) {
         // Skip all-day events and cancelled events
         continue;
