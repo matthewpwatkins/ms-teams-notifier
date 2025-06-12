@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "main": "index.js",
   "scripts": {
-    "build": "rm -fr dist/* && webpack --config webpack.config.js",
+    "build": "rm -fr dist/* && webpack --config webpack.config.js && rm -f dist/content.js.LICENSE.txt && rm -fr dist/*.map",
     "build:local": "NODE_ENV=development LOG_LEVEL=trace npm run build",
     "zip": "npm run build && cd dist && zip -r ms-teams-notifier.zip ./* && mv ms-teams-notifier.zip ../ms-teams-notifier.zip",
     "test": "jest"
